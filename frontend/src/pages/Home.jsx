@@ -65,7 +65,7 @@ const Home = () => {
                                         <li className="nav-item">
 
                                             <i className="bi bi-wallet-fill"></i>
-                                            <Link to={``}>Fund Transfer</Link>
+                                            <Link to={`fund-transfer`}>Fund Transfer</Link>
 
                                         </li>
                                     </div>

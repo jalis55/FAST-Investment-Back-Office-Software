@@ -1,13 +1,13 @@
 import React from 'react'
 
 const Default = () => {
-  return (
-    <div>
-                    <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    return (
+        <div>
+            <div className="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 className="h2">Dashboard</h1>
             </div>
 
-           
+
             <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
                 <div className="col">
                     <div className="card stat-card">
@@ -47,8 +47,8 @@ const Default = () => {
                     <p>This is where you would display the main content for the selected tab.</p>
                 </div>
             </div>
-    </div>
-  )
+        </div>
+    )
 }
 
 export default Default

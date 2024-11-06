@@ -10,6 +10,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Transactions from './pages/Transactions';
 import PendingPayments from './pages/PendingPayments';
+import Dashboard from './pages/Dashboard';
+import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
+import FundTransfer from './pages/FundTransfer';
 
 
 
@@ -29,10 +32,16 @@ const router = createBrowserRouter([
       </ProtectedRoute>
     ),
     children: [
+      // {
+      //   index: true,  // This makes Default the default child for the '/' route
+      //   path:"/overview",
+      //   element: <Default />,
+        
+      // },
       {
         index: true,  // This makes Default the default child for the '/' route
         path:"/overview",
-        element: <Default />,
+        element: <Dashboard />,
         
       },
 
@@ -47,7 +56,11 @@ const router = createBrowserRouter([
       {
         path:"/pending-payments",
         element:<PendingPayments/>
-      }
+      },
+      {
+        path:"/fund-transfer",
+        element:<FundTransfer/>
+      },
     ],
   },
   {
