@@ -74,4 +74,4 @@ class Trade(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return str(self.id)
+        return f"{str(self.id)}~{self.trns_type}~{self.qty}~{self.unit_price}"
