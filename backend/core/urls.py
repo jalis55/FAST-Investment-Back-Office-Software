@@ -13,6 +13,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/',include('user_app.urls')),
     path('api/acc/',include('accounting.urls')),
+    # path('api/stock/',include('stock_app.urls')),
     
     
 ]

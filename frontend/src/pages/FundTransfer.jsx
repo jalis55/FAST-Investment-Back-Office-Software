@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import Swal from 'sweetalert2';
+import { type } from '@testing-library/user-event/dist/type';
 
 const FundTransfer = () => {
     const [users, setUsers] = useState([]);
@@ -17,6 +18,11 @@ const FundTransfer = () => {
             .then((response) => setUsers(response.data))
             .catch((error) => console.error("Error fetching users:", error));
     }, []);
+    
+    const getUserName = (userId) => {
+        const user = users.find((user) => user.id === Number(userId));
+        return user ? user.name : 'Unknown User';
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -44,7 +50,7 @@ const FundTransfer = () => {
         // Show confirmation dialog
         const confirmResult = await Swal.fire({
             title: 'Are you sure?',
-            text: `You are about to transfer BDT${amount} from Inv ID: ${fromUser} to Inv ID: ${toUser} .`,
+            text: `You are about to transfer BDT:${amount} from: ${getUserName(fromUser)} To: ${getUserName(toUser)} .`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
@@ -90,6 +96,7 @@ const FundTransfer = () => {
         <div>
             <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content mt-2">
                 <div>
+                 
                     <form
                         onSubmit={handleSubmit}
                         className="border mt-4 p-4"
@@ -138,7 +145,7 @@ const FundTransfer = () => {
                             />
                         </div>
                         <button type="submit" className="btn btn-primary mt-3">
-                            Create Transaction
+                            Transfer Fund
                         </button>
                     </form>
                 </div>

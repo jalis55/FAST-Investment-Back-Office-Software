@@ -37,4 +37,5 @@ class TransactionApproveSerializer(serializers.ModelSerializer):
 class FundTransferSerializer(serializers.ModelSerializer):
     class Meta:
         model=FundTransfer
-        fields=['transfer_to','transfer_from','amount','issued_by','issued_date']
+        fields=['transfer_to','transfer_from','amount']
+        read_only_fields=['issued_by','issued_date']
