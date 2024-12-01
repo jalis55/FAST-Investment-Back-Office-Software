@@ -39,6 +39,12 @@ class Investment(models.Model):
 
     def __str__(self) -> str:
         return self.project.project_title
+class FinancialAdvisor(models.Model):
+    advisor=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='advisor')
+    com_percentage=models.DecimalField(max_digits=10, decimal_places=2)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
 class Instrument(models.Model):
     id = models.AutoField(primary_key=True)
@@ -74,4 +80,4 @@ class Trade(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
-        return f"{str(self.id)}~{self.trns_type}~{self.qty}~{self.unit_price}"
+        return str(self.id)

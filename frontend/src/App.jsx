@@ -13,6 +13,7 @@ import PendingPayments from './pages/PendingPayments';
 import Dashboard from './pages/Dashboard';
 import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
 import FundTransfer from './pages/FundTransfer';
+import PackageForm from './pages/PackageForm';
 
 
 
@@ -44,10 +45,13 @@ const router = createBrowserRouter([
         element: <Dashboard />,
         
       },
-
       {
         path: "/users",
         element: <UserList />,
+      },
+      {
+        path: "/new-pac",
+        element: <PackageForm/>,
       },
       {
         path:"transactions",
