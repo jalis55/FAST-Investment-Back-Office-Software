@@ -42,6 +42,7 @@ class TransactionCreateView(generics.CreateAPIView):
     serializer_class = TransactionSerializer
     permission_classes = [IsAdminUser]
 
+    @db_transaction.atomic  # Ensure atomicity
     def perform_create(self, serializer):
         try:
             # Save the transaction with issued_by, status, and issued_date
@@ -51,26 +52,22 @@ class TransactionCreateView(generics.CreateAPIView):
                 issued_date=timezone.now()
             )
         
-            user = transaction.user  # Get the user related to this transaction
-        
-            # Get or create the account for the user
-            account, created = Account.objects.get_or_create(user=user)
-
-            # Update the balance if it's a deposit
+            # Get the user's account and update balance if transaction is a deposit
             if transaction.transaction_type == 'deposit':
+                account = Account.objects.get(user=transaction.user)
+                account.update_balance(transaction.amount, 'deposit')
 
-                try:
-                    account.update_balance(transaction.amount, transaction.transaction_type)
-                    transaction.status='completed'
-                    transaction.save()
-                except Exception as e:
-                    print("trnasaction failed")
-                    transaction.status='completed'
-                    transaction.save()
+                # Mark transaction as completed if successful
+                transaction.status = 'completed'
+                transaction.narration=f"Deposit amount {transaction.amount} has successful"
+                transaction.save()
+        
+        except Account.DoesNotExist:
+            raise ValidationError({"detail": "Account not found for the user."})
+        except Exception as e:
+            raise ValidationError({"detail": f"Transaction failed: {str(e)}"})
+        
 
-
-        except ValidationError as e:
-            print(e.detail)  # Logs specific validation errors
 class PendingPaymentsView(generics.ListAPIView):
     queryset=Transaction.objects.filter(transaction_type='payment',status='pending')
     serializer_class=PendingPaymentsSerializer
