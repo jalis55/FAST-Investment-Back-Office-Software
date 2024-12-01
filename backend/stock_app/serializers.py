@@ -1,11 +1,8 @@
 from rest_framework import serializers
 from django.db import transaction
 from .models import Project, Investment, FinancialAdvisor
-from accounting.models import Transaction
-from django.contrib.auth import get_user_model
+from accounting.models import Account,Transaction
 from rest_framework.exceptions import ValidationError
-
-User = get_user_model()
 
 class FinancialAdvisorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -17,8 +14,6 @@ class InvestmentSerializer(serializers.ModelSerializer):
         model = Investment
         fields = ['investor', 'amount']
 
-
-
 class ProjectSerializer(serializers.ModelSerializer):
     financial_advisors = FinancialAdvisorSerializer(many=True, required=False)
     investments = InvestmentSerializer(many=True, required=False)
@@ -26,60 +21,54 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = [
-            'project_id', 'project_title', 'project_description', 
+            'project_id', 'project_title', 'project_description',
             'total_investment', 'total_collection', 'gain_or_lose',
             'created_by', 'created_at', 'updated_at', 'financial_advisors', 'investments'
         ]
         read_only_fields = ['created_by', 'created_at', 'updated_at']
 
     def create(self, validated_data):
-        financial_advisors_data = validated_data.pop('financial_advisors', [])
-        investments_data = validated_data.pop('investments', [])
+        advisor_data = validated_data.pop('financial_advisors', [])
+        investor_data = validated_data.pop('investments', [])
 
-        with transaction.atomic():  # Ensure atomicity
-            # Create the project with null values for investment and collection
-            project = Project.objects.create(
-                **validated_data,
-                created_by=self.context['request'].user,
-                total_investment=None,  # Set initial value as null
-                total_collection=None,  # Set initial value as null
-                gain_or_lose=None        # Set initial value as null
+        # Set the created_by field to the current user
+        request_user = self.context['request'].user
+        project = Project.objects.create(created_by=request_user, **validated_data)
+
+        # Process financial advisors
+        for advisor in advisor_data:
+            FinancialAdvisor.objects.create(project=project, **advisor)
+
+        # Process investments and deduct from account
+        for investor in investor_data:
+            inv_user = investor.get('investor')
+            amount = investor.get('amount')
+
+            # Retrieve the user's account
+            try:
+                account = Account.objects.get(user_id=inv_user)
+            except Account.DoesNotExist:
+                raise ValidationError(f"No account found for user ID {inv_user}.")
+
+            # Deduct the amount from the account
+            account.update_balance(amount, 'payment')
+
+            # Create the investment record with the project reference
+            Investment.objects.create(
+            project=project,
+            investor=inv_user,
+            amount=amount,
+            authorized_by=request_user  # Set the authorized_by field
             )
 
-            # Create and associate financial advisors
-            for advisor_data in financial_advisors_data:
-                FinancialAdvisor.objects.create(project=project, **advisor_data)
-
-            # Create and associate investments with transactions
-            for investment_data in investments_data:
-                investor = investment_data['investor']
-                investment_amount = investment_data['amount']
-
-                # Retrieve investor's account
-                investor_account = investor.account
-
-                # Check if the investor has sufficient balance
-                if investor_account.balance < investment_amount:
-                    raise ValidationError({"detail": f"Insufficient balance for investor {investor}."})
-
-                # Deduct the investment amount and update balance
-                investor_account.update_balance(investment_amount, 'payment')
-
-                # Create the investment record
-                investment = Investment.objects.create(
-                    project=project,
-                    authorized_by=self.context['request'].user,
-                    **investment_data
-                )
-
-                # Create a corresponding transaction
-                Transaction.objects.create(
-                    user=investor,
-                    amount=investment_amount,
+                            # Create a corresponding transaction
+            Transaction.objects.create(
+                    user=inv_user,
+                    amount=amount,
                     transaction_type='payment',  # Set transaction type as 'payment'
                     narration=f'Payment for project: {project.project_id}',
                     issued_by=self.context['request'].user,
                     status='completed'
                 )
 
-            return project
+        return project

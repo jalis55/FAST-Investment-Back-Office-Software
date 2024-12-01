@@ -81,7 +81,7 @@ const Home = () => {
                                         <li className="nav-item">
 
                                             <i className="bi bi-cash-coin"></i>
-                                            <Link to={`new-pac`}>New Package</Link>
+                                            <Link to={`create-project`}>Create Project</Link>
 
                                         </li>
                                     </div>

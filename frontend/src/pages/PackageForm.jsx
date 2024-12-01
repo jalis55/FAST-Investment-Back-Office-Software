@@ -6,9 +6,11 @@ const ProjectForm = () => {
   const [projectName, setProjectName] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
   const [users, setUsers] = useState([]); // List of users for advisors and investors
-  const [advisors, setAdvisors] = useState([{ userId: "", percentage: "" }]); // Advisor data
-  const [investors, setInvestors] = useState([{ userId: "", amount: "" }]); // Investor data
+  const [advisors, setAdvisors] = useState([]); // Advisor data
+  const [investors, setInvestors] = useState([]); // Investor data
   const [errors, setErrors] = useState("");
+  const [isAddingAdvisor, setIsAddingAdvisor] = useState(false);
+  const [isAddingInvestor, setIsAddingInvestor] = useState(false);
 
   useEffect(() => {
     api
@@ -16,6 +18,8 @@ const ProjectForm = () => {
       .then((response) => setUsers(response.data))
       .catch((error) => console.error("Error fetching users:", error));
   }, []);
+
+  
 
   const handleProjectChange = (e, field) => {
     if (field === "name") setProjectName(e.target.value);
@@ -36,6 +40,16 @@ const ProjectForm = () => {
 
   const addNewAdvisor = () => setAdvisors([...advisors, { userId: "", percentage: "" }]);
   const addNewInvestor = () => setInvestors([...investors, { userId: "", amount: "" }]);
+
+  const removeAdvisor = (index) => {
+    const updatedAdvisors = advisors.filter((_, i) => i !== index);
+    setAdvisors(updatedAdvisors);
+  };
+
+  const removeInvestor = (index) => {
+    const updatedInvestors = investors.filter((_, i) => i !== index);
+    setInvestors(updatedInvestors);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -63,14 +77,14 @@ const ProjectForm = () => {
       investors,
     };
 
-    api.post("/api/stock/projects/", formData)
+    api.post("/api/projects/", formData)
       .then(() => {
         Swal.fire("Success!", "Project created successfully!", "success");
         // Clear form fields
         setProjectName("");
         setProjectDescription("");
-        setAdvisors([{ userId: "", percentage: "" }]);
-        setInvestors([{ userId: "", amount: "" }]);
+        setAdvisors([]);
+        setInvestors([]);
       })
       .catch((error) => {
         console.error("Error submitting form:", error);
@@ -104,53 +118,117 @@ const ProjectForm = () => {
 
         {/* Advisors Section */}
         <h4>Financial Advisors</h4>
-        {advisors.map((_, index) => (
-          <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-            <select
-              value={advisors[index].userId}
-              onChange={(e) => handleAdvisorChange(index, "userId", e.target.value)}
-            >
-              <option value="">Select Advisor</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
+        {advisors.length === 0 ? (
+          <>
+            <button type="button" onClick={() => setIsAddingAdvisor(true)}>
+              Add Advisor
+            </button>
+            {isAddingAdvisor && (
+              <div>
+                <select
+                  onChange={(e) => handleAdvisorChange(advisors.length, "userId", e.target.value)}
+                  style={{ marginBottom: "10px", display: "block", width: "100%" }}
+                >
+                  <option value="">Select Advisor</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Commission (%)"
+                  onChange={(e) => handleAdvisorChange(advisors.length, "percentage", e.target.value)}
+                  style={{ display: "block", width: "100%", marginBottom: "10px" }}
+                />
+                <button type="button" onClick={addNewAdvisor}>
+                  Save Advisor
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <table style={{ width: "100%", marginBottom: "20px" }}>
+            <thead>
+              <tr>
+                <th>Advisor</th>
+                <th>Commission (%)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {advisors.map((advisor, index) => (
+                <tr key={index}>
+                  <td>{users.find((user) => user.id === advisor.userId)?.name}</td>
+                  <td>{advisor.percentage}</td>
+                  <td>
+                    <button type="button" onClick={() => removeAdvisor(index)}>
+                      Remove
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </select>
-            <input
-              type="number"
-              value={advisors[index].percentage}
-              onChange={(e) => handleAdvisorChange(index, "percentage", e.target.value)}
-              placeholder="Commission (%)"
-            />
-          </div>
-        ))}
-        <button type="button" onClick={addNewAdvisor}>Add Advisor</button>
+            </tbody>
+          </table>
+        )}
 
         {/* Investors Section */}
         <h4>Investors</h4>
-        {investors.map((_, index) => (
-          <div key={index} style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-            <select
-              value={investors[index].userId}
-              onChange={(e) => handleInvestorChange(index, "userId", e.target.value)}
-            >
-              <option value="">Select Investor</option>
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name}
-                </option>
+        {investors.length === 0 ? (
+          <>
+            <button type="button" onClick={() => setIsAddingInvestor(true)}>
+              Add Investor
+            </button>
+            {isAddingInvestor && (
+              <div>
+                <select
+                  onChange={(e) => handleInvestorChange(investors.length, "userId", e.target.value)}
+                  style={{ marginBottom: "10px", display: "block", width: "100%" }}
+                >
+                  <option value="">Select Investor</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Investment Amount"
+                  onChange={(e) => handleInvestorChange(investors.length, "amount", e.target.value)}
+                  style={{ display: "block", width: "100%", marginBottom: "10px" }}
+                />
+                <button type="button" onClick={addNewInvestor}>
+                  Save Investor
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <table style={{ width: "100%", marginBottom: "20px" }}>
+            <thead>
+              <tr>
+                <th>Investor</th>
+                <th>Investment Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {investors.map((investor, index) => (
+                <tr key={index}>
+                  <td>{users.find((user) => user.id === investor.userId)?.name}</td>
+                  <td>{investor.amount}</td>
+                  <td>
+                    <button type="button" onClick={() => removeInvestor(index)}>
+                      Remove
+                    </button>
+                  </td>
+                </tr>
               ))}
-            </select>
-            <input
-              type="number"
-              value={investors[index].amount}
-              onChange={(e) => handleInvestorChange(index, "amount", e.target.value)}
-              placeholder="Investment Amount"
-            />
-          </div>
-        ))}
-        <button type="button" onClick={addNewInvestor}>Add Investor</button>
+            </tbody>
+          </table>
+        )}
 
         {errors && <p style={{ color: "red" }}>{errors}</p>}
 

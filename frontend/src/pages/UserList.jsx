@@ -11,7 +11,6 @@ const UserList = () => {
         api.get('/api/admin/users/')
             .then((res) => res.data)
             .then((data) => {
-                console.log("test")
                 setUserList(data);
             })
             .catch((err) => alert(err));

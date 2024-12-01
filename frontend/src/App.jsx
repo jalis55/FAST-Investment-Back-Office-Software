@@ -14,6 +14,7 @@ import Dashboard from './pages/Dashboard';
 import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
 import FundTransfer from './pages/FundTransfer';
 import PackageForm from './pages/PackageForm';
+import CreateProjectForm from './pages/CreateProjectForm';
 
 
 
@@ -50,8 +51,8 @@ const router = createBrowserRouter([
         element: <UserList />,
       },
       {
-        path: "/new-pac",
-        element: <PackageForm/>,
+        path: "/create-project",
+        element: <CreateProjectForm/>,
       },
       {
         path:"transactions",
