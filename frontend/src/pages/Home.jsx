@@ -85,6 +85,22 @@ const Home = () => {
 
                                         </li>
                                     </div>
+                                    <div className="nav-link">
+                                        <li className="nav-item">
+
+                                            <i className="bi bi-cash-coin"></i>
+                                            <Link to={`project-list`}>Project List</Link>
+
+                                        </li>
+                                    </div>
+                                    <div className="nav-link">
+                                        <li className="nav-item">
+
+                                            <i className="bi bi-cash-coin"></i>
+                                            <Link to={`project-search`}>Search Project</Link>
+
+                                        </li>
+                                    </div>
 
                                 </>
 

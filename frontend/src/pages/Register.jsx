@@ -14,6 +14,7 @@ const Register = () => {
     return <Navigate to="/" />;  // Redirect to home page if authorized
   }
   return <Form route="/api/user/register/" method="register" />
+  
 }
 
 export default Register;

@@ -1,74 +1,28 @@
 from rest_framework import serializers
-from django.db import transaction
-from .models import Project, Investment, FinancialAdvisor
-from accounting.models import Account,Transaction
-from rest_framework.exceptions import ValidationError
+from .models import Project, Investment, FinancialAdvisor,Trade
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
 
 class FinancialAdvisorSerializer(serializers.ModelSerializer):
+    advisor_name = serializers.CharField(source='advisor.name', read_only=True)
+    advisor_email = serializers.CharField(source='advisor.email', read_only=True)
     class Meta:
         model = FinancialAdvisor
-        fields = ['advisor', 'com_percentage']
+        fields = ['advisor', 'com_percentage','advisor_name', 'advisor_email']
 
 class InvestmentSerializer(serializers.ModelSerializer):
+    investor_name = serializers.CharField(source='investor.name', read_only=True)
+    investor_email = serializers.CharField(source='investor.email', read_only=True)
+
     class Meta:
         model = Investment
-        fields = ['investor', 'amount']
+        fields = ['investor', 'amount', 'investor_name', 'investor_email']
 
-class ProjectSerializer(serializers.ModelSerializer):
-    financial_advisors = FinancialAdvisorSerializer(many=True, required=False)
-    investments = InvestmentSerializer(many=True, required=False)
 
+class TradeSerializer(serializers.ModelSerializer):
+    instrument_name = serializers.CharField(source='instrument.name', read_only=True)
     class Meta:
-        model = Project
-        fields = [
-            'project_id', 'project_title', 'project_description',
-            'total_investment', 'total_collection', 'gain_or_lose',
-            'created_by', 'created_at', 'updated_at', 'financial_advisors', 'investments'
-        ]
-        read_only_fields = ['created_by', 'created_at', 'updated_at']
-
-    def create(self, validated_data):
-        advisor_data = validated_data.pop('financial_advisors', [])
-        investor_data = validated_data.pop('investments', [])
-
-        # Set the created_by field to the current user
-        request_user = self.context['request'].user
-        project = Project.objects.create(created_by=request_user, **validated_data)
-
-        # Process financial advisors
-        for advisor in advisor_data:
-            FinancialAdvisor.objects.create(project=project, **advisor)
-
-        # Process investments and deduct from account
-        for investor in investor_data:
-            inv_user = investor.get('investor')
-            amount = investor.get('amount')
-
-            # Retrieve the user's account
-            try:
-                account = Account.objects.get(user_id=inv_user)
-            except Account.DoesNotExist:
-                raise ValidationError(f"No account found for user ID {inv_user}.")
-
-            # Deduct the amount from the account
-            account.update_balance(amount, 'payment')
-
-            # Create the investment record with the project reference
-            Investment.objects.create(
-            project=project,
-            investor=inv_user,
-            amount=amount,
-            authorized_by=request_user  # Set the authorized_by field
-            )
-
-                            # Create a corresponding transaction
-            Transaction.objects.create(
-                    user=inv_user,
-                    amount=amount,
-                    transaction_type='payment',  # Set transaction type as 'payment'
-                    narration=f'Payment for project: {project.project_id}',
-                    issued_by=self.context['request'].user,
-                    status='completed'
-                )
-
-        return project
+        model = Trade
+        fields = ['id','instrument_name', 'qty', 'unit_price', 'trns_type']  

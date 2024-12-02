@@ -15,6 +15,8 @@ import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
 import FundTransfer from './pages/FundTransfer';
 import PackageForm from './pages/PackageForm';
 import CreateProjectForm from './pages/CreateProjectForm';
+import ProjectList from './pages/ProjectList';
+import SearchProject from './pages/SearchProject';
 
 
 
@@ -55,6 +57,15 @@ const router = createBrowserRouter([
         element: <CreateProjectForm/>,
       },
       {
+        path: "/project-list",
+        element: <ProjectList/>,
+      },
+     
+      {
+        path: "/project-search",
+        element: <SearchProject/>,
+      },
+      {
         path:"transactions",
         element:<Transactions/>,
       },
@@ -80,6 +91,7 @@ const router = createBrowserRouter([
     path: '/register',
     element: <Register />,
   },
+  
   {
     path: '*',
     element: <NotFound />,
