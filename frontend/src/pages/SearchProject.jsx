@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import api from '../api';
+import api from '../api'; // Assumes a custom API service for handling requests
 
 const SearchProject = () => {
     const [projectId, setProjectId] = useState('');
     const [projectDetails, setProjectDetails] = useState(null);
-    const [showModal, setShowModal] = useState(false);  // Modal state
-    const [selectedAdvisor, setSelectedAdvisor] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
+
+    const [investors, setInvestors] = useState([]);
+    const [selectedInvestor, setSelectedInvestor] = useState('');
     const [investmentAmount, setInvestmentAmount] = useState('');
+    const [investorAvailableBalanace,setInvestorAvailableBalanace]=useState('');
 
-    // Function to toggle the modal visibility
-    const toggleModal = () => {
-        setShowModal(!showModal);
-    };
-
-    // Search project details using Project ID
+    // Function to fetch project details
     const searchProject = () => {
         if (!projectId.trim()) {
             alert('Please enter a valid Project ID.');
@@ -28,22 +26,64 @@ const SearchProject = () => {
             })
             .catch((error) => console.error('Error fetching project details:', error));
     };
+// modal
+    const handleModal = () => {
+        
+        api
+            .get('/api/admin/customers/') 
+            .then((response) => {
+                setInvestors(response.data);
 
-    // Handle Save button in modal (Add Investment)
-    const handleSave = () => {
-        if (!selectedAdvisor || !investmentAmount) {
-            alert('Please fill in both fields!');
-            return;
-        }
+            })
+            .catch((error) => console.error('Error fetching users:', error));
+        setModalVisible(true);
 
-        // Save investment logic here (e.g., send data to API)
-        console.log('Investment Saved:', { selectedAdvisor, investmentAmount });
+    }
 
-        // Reset fields and close the modal
-        setSelectedAdvisor('');
-        setInvestmentAmount('');
-        toggleModal();
+    const handleSelectInvestor=(invId)=>{
+
+        setSelectedInvestor(invId);
+        api
+        .get(`/api/acc/user/${invId}/balance/`) 
+        .then((response) => {
+            setInvestorAvailableBalanace(response.data.balance);
+        })
+        .catch((error) => console.error('Error fetching users:', error));
+
+        
+    }
+    console.log(investorAvailableBalanace);
+
+    // Function to calculate total values for investments and trades
+    const calculateValues = () => {
+        if (!projectDetails) return { totalInvestment: 0, totalBuy: 0, totalSell: 0, currentBalance: 0 };
+
+        let totalInvestment = 0;
+        let totalBuy = 0;
+        let totalSell = 0;
+
+        // Calculate total investment
+        projectDetails.investments.forEach((investment) => {
+            totalInvestment += parseFloat(investment.amount) || 0;
+        });
+
+        // Calculate total buy and total sell
+        projectDetails.trades.forEach((trade) => {
+            const amount = parseFloat(trade.unit_price) * parseInt(trade.qty) || 0;
+            if (trade.trns_type === 'buy') {
+                totalBuy += amount;
+            } else if (trade.trns_type === 'sell') {
+                totalSell += amount;
+            }
+        });
+
+        // Calculate current balance
+        const currentBalance = totalInvestment - totalBuy + totalSell;
+
+        return { totalInvestment, totalBuy, totalSell, currentBalance };
     };
+
+    const { totalInvestment, totalBuy, totalSell, currentBalance } = calculateValues();
 
     return (
         <div className="container mt-5">
@@ -53,25 +93,62 @@ const SearchProject = () => {
                     className="form-control rounded"
                     placeholder="Search Project ID"
                     aria-label="Search"
-                    aria-describedby="search-addon"
-                    value={projectId} // Controlled input
+                    value={projectId}
                     onChange={(e) => setProjectId(e.target.value)}
                 />
                 <button className="btn btn-primary" onClick={searchProject}>
                     Search
                 </button>
+
             </div>
 
             {projectDetails && (
                 <div>
+                    {/* Display Total Values */}
+                    <div className="row mb-4">
+                        <div className="col-md-3">
+                            <div className="card">
+                                <div className="card-body">
+                                    <h5 className="card-title">Total Investment</h5>
+                                    <p className="card-text">${totalInvestment.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card">
+                                <div className="card-body">
+                                    <h5 className="card-title">Total Buy</h5>
+                                    <p className="card-text">${totalBuy.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card">
+                                <div className="card-body">
+                                    <h5 className="card-title">Total Sell</h5>
+                                    <p className="card-text">${totalSell.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="col-md-3">
+                            <div className="card">
+                                <div className="card-body">
+                                    <h5 className="card-title">Current Balance</h5>
+                                    <p className="card-text">${currentBalance.toFixed(2)}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Project Details */}
                     <div className="card mb-4">
                         <div className="card-header">
                             <h3>Project Details</h3>
                         </div>
                         <div className="card-body">
                             <h5 className="card-title">Project ID: {projectDetails.project_id}</h5>
-                            <p className="card-text"><strong>Title:</strong> {projectDetails.project_title}</p>
-                            <p className="card-text"><strong>Description:</strong> {projectDetails.project_description}</p>
+                            <p><strong>Title:</strong> {projectDetails.project_title}</p>
+                            <p><strong>Description:</strong> {projectDetails.project_description}</p>
                         </div>
                     </div>
 
@@ -104,21 +181,14 @@ const SearchProject = () => {
                         </div>
                     )}
 
-                    {/* Button to trigger Modal */}
-                    <div className="card mb-4">
-                        <div className="card-header d-flex justify-content-between">
-                            <h4>Investments</h4>
-                            <button className="btn btn-success" onClick={toggleModal}>
-                                Add Investment
-                            </button>
-                        </div>
-                    </div>
-
                     {/* Investments Section */}
                     {projectDetails.investments && (
                         <div className="card mb-4">
-                            <div className="card-header">
+                            <div className="card-header d-flex justify-content-between align-items-center">
                                 <h4>Investments</h4>
+                                <button className="btn btn-info" onClick={handleModal}>
+                                    Add Investment
+                                </button>
                             </div>
                             <div className="card-body">
                                 <table className="table">
@@ -134,7 +204,7 @@ const SearchProject = () => {
                                             <tr key={index}>
                                                 <td>{investment.investor_name}</td>
                                                 <td>{investment.investor_email}</td>
-                                                <td>{investment.amount}</td>
+                                                <td>${parseFloat(investment.amount).toFixed(2)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -143,70 +213,86 @@ const SearchProject = () => {
                         </div>
                     )}
 
-                    {/* Modal for Adding Investment */}
-                    {showModal && (
-                        <div
-                            className="modal show"
-                            style={{ display: 'block' }}
-                            onClick={toggleModal}  // Close modal when clicking outside
-                        >
-                            <div
-                                className="modal-dialog"
-                                onClick={(e) => e.stopPropagation()}  // Prevent closing when clicking inside modal content
-                            >
-                                <div className="modal-content">
-                                    <div className="modal-header">
-                                        <h5 className="modal-title">Add Investment</h5>
-                                        <button type="button" className="btn-close" onClick={toggleModal}></button>
-                                    </div>
-                                    <div className="modal-body">
-                                        {/* Select field */}
-                                        <div className="mb-3">
-                                            <label htmlFor="advisorSelect" className="form-label">Select Advisor</label>
-                                            <select
-                                                id="advisorSelect"
-                                                className="form-select"
-                                                value={selectedAdvisor}
-                                                onChange={(e) => setSelectedAdvisor(e.target.value)}
-                                            >
-                                                <option value="">Select Advisor</option>
-                                                {projectDetails.financial_advisors?.map((advisor, index) => (
-                                                    <option key={index} value={advisor.advisor_email}>
-                                                        {advisor.advisor_name}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-
-                                        {/* Input field */}
-                                        <div className="mb-3">
-                                            <label htmlFor="investmentAmount" className="form-label">Investment Amount</label>
-                                            <input
-                                                type="number"
-                                                className="form-control"
-                                                id="investmentAmount"
-                                                value={investmentAmount}
-                                                onChange={(e) => setInvestmentAmount(e.target.value)}
-                                                placeholder="Enter amount"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button type="button" className="btn btn-secondary" onClick={toggleModal}>
-                                            Close
-                                        </button>
-                                        <button type="button" className="btn btn-primary" onClick={handleSave}>
-                                            Save
-                                        </button>
-                                    </div>
-                                </div>
+                    {/* Trades Section */}
+                    {projectDetails.trades && (
+                        <div className="card mb-4">
+                            <div className="card-header">
+                                <h4>Trades</h4>
+                            </div>
+                            <div className="card-body">
+                                <table className="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Instrument</th>
+                                            <th>Quantity</th>
+                                            <th>Unit Price</th>
+                                            <th>Transaction Type</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {projectDetails.trades.map((trade, index) => (
+                                            <tr key={index}>
+                                                <td>{trade.instrument_name}</td>
+                                                <td>{trade.qty}</td>
+                                                <td>${parseFloat(trade.unit_price).toFixed(2)}</td>
+                                                <td>{trade.trns_type}</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     )}
                 </div>
             )}
+
+            {/* Modal */}
+            {modalVisible && (
+                <div className="modal fade show" style={{ display: 'block' }} tabIndex="-1" role="dialog">
+                    <div className="modal-dialog" role="document">
+                        <div className="modal-content">
+                            <div className="modal-header">
+                                <h5 className="modal-title">Add Investment</h5>
+                                <button type="button" className="close" onClick={() => setModalVisible(false)}>
+                                    <span>&times;</span>
+                                </button>
+                            </div>
+                            <div className="modal-body">
+                                <div>
+                                    <select
+                                        className="form-select"
+                                        value={selectedInvestor}
+                                        onChange={(e) => handleSelectInvestor(e.target.value)}
+                                    >
+                                        <option value="">Select Investor</option>
+                                        {investors.map((investor) => (
+                                            <option key={investor.id} value={investor.id}>
+                                                {investor.name} ({investor.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <input
+                                        type="number"
+                                        className="form-control mt-2"
+                                        placeholder="Investment Amount"
+                                        value={investmentAmount}
+                                        onChange={(e) => setInvestmentAmount(e.target.value)}
+                                    />
+                                    { investorAvailableBalanace && (<p>Available Balace:{investorAvailableBalanace}</p>)}
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button type="button" className="btn btn-secondary" onClick={() => setModalVisible(false)}>
+                                    Close
+                                </button>
+                                <button type="button" className="btn btn-primary">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
-
+      
 export default SearchProject;
