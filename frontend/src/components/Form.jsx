@@ -30,7 +30,7 @@ function Form({ route, method }) {
                 alert("Password does not match");
                 return;
             }
-            const res = await api.post(route, { email, password });
+            const res = await api.post("route", { email, password });
 
             if (method === "login") {
 

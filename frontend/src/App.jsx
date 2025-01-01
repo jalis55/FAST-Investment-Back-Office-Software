@@ -8,6 +8,8 @@ import Default from './pages/Default';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import 'bootstrap/dist/css/bootstrap.min.css';
+// import './assets/css/portal.css';
+// import '../public/assets/css/portal.css';
 import Transactions from './pages/Transactions';
 import PendingPayments from './pages/PendingPayments';
 import Dashboard from './pages/Dashboard';
