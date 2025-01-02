@@ -2,15 +2,16 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import Home from './pages/Home';
+
+import Home from './layouts/Home/Home.jsx';
 import UserList from './pages/UserList';
 import Default from './pages/Default';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import Transactions from './pages/Transactions';
 import PendingPayments from './pages/PendingPayments';
-import Dashboard from './pages/Dashboard';
+// import Dashboard from './pages/Dashboard';
+import Dashboard from './layouts/Dashboard/Dashboard.jsx';
 import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
 import FundTransfer from './pages/FundTransfer';
 import PackageForm from './pages/PackageForm';
@@ -50,11 +51,11 @@ const router = createBrowserRouter([
         element: <UserList />,
       },
       {
-        path: "/new-pac",
+        path: "/new-project",
         element: <PackageForm/>,
       },
       {
-        path:"transactions",
+        path:"/transactions",
         element:<Transactions/>,
       },
       {

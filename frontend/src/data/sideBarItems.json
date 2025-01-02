@@ -1,0 +1,41 @@
+[
+    {
+      "menuName": "Dashboard",
+      "url": "/overview",
+      "role":"admin"
+    },
+    {
+      "menuName":"User List",
+      "url":"/users",
+      "role":"superadmin"
+    },
+    {
+      "menuName":"New Project",
+      "url":"/new-project",
+      "role":"admin"
+    },
+    {
+      "menuName":"Transaction",
+      "url":"/transactions",
+      "role":"admin"
+    },
+    {
+      "menuName":"Fund Transfer",
+      "url":"/fund-transfer",
+      "role":"admin"
+    },
+    {
+      "menuName":"Pending Payments",
+      "url":"/pending-payments",
+      "role":"admin"
+    },
+    
+    
+
+    {
+      "menuName": "Logout",
+      "url": "/logout",
+      "role":""
+    }
+  ]
+  
