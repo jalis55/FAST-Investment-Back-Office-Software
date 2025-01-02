@@ -2,18 +2,18 @@ import React from 'react';
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
-
 import Home from './layouts/Home/Home.jsx';
-import UserList from './pages/UserList';
 import Default from './pages/Default';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
-import Transactions from './pages/Transactions';
+
+import Transactions from './layouts/Transaction/Transactions.jsx';
 import PendingPayments from './pages/PendingPayments';
-// import Dashboard from './pages/Dashboard';
 import Dashboard from './layouts/Dashboard/Dashboard.jsx';
+import UserList from './layouts/UserList/UserList.jsx';
 import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
-import FundTransfer from './pages/FundTransfer';
+// import FundTransfer from './pages/FundTransfer';
+import FundTransfer from './layouts/FundTransfer/FundTransfer.jsx';
 import PackageForm from './pages/PackageForm';
 
 

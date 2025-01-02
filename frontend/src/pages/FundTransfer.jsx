@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
 import Swal from 'sweetalert2';
-import { type } from '@testing-library/user-event/dist/type';
 
 const FundTransfer = () => {
     const [users, setUsers] = useState([]);
@@ -96,7 +95,6 @@ const FundTransfer = () => {
         <div>
             <main className="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content mt-2">
                 <div>
-                 
                     <form
                         onSubmit={handleSubmit}
                         className="border mt-4 p-4"
