@@ -3,6 +3,7 @@ import profile_pic from '../../assets/images/faces/face1.jpg';
 import profile_img from '../../assets/images/faces/face8.jpg';
 import logo from  '../../assets/images/logo.svg';
 import logo_mini from '../../assets/images/logo-mini.svg';
+import { Dropdown } from 'react-bootstrap';
 
 const NavBar = () => {
   return (
@@ -15,6 +16,7 @@ const NavBar = () => {
                             <img src={logo_mini} alt="logo" /> </a>
                     </div>
                     <div className="navbar-menu-wrapper d-flex align-items-center">
+                        
                         <ul className="navbar-nav">
                             <li className="nav-item font-weight-semibold d-none d-lg-block">Help : +050 2992 709</li>
                             <li className="nav-item dropdown language-dropdown">

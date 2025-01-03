@@ -54,7 +54,7 @@ const PendingPayments = () => {
                         <th scope="col">Amount</th>
                         <th scope="col">Issued by</th>
                         <th scope="col">Issued date</th>
-                        <th scope="col">Action</th> {/* Fixed typo here: 'scopre' -> 'scope' */}
+                        <th scope="col">Action</th> 
                     </tr>
                 </thead>
                 <tbody>

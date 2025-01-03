@@ -6,15 +6,14 @@ import Home from './layouts/Home/Home.jsx';
 import Default from './pages/Default';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
-
 import Transactions from './layouts/Transaction/Transactions.jsx';
-import PendingPayments from './pages/PendingPayments';
+import PendingPayments from './layouts/PendingPayments/PendingPayments.jsx';
 import Dashboard from './layouts/Dashboard/Dashboard.jsx';
 import UserList from './layouts/UserList/UserList.jsx';
 import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
-// import FundTransfer from './pages/FundTransfer';
 import FundTransfer from './layouts/FundTransfer/FundTransfer.jsx';
 import PackageForm from './pages/PackageForm';
+import Projects from './layouts/Projects/Projects.jsx';
 
 
 
@@ -52,7 +51,11 @@ const router = createBrowserRouter([
       },
       {
         path: "/new-project",
-        element: <PackageForm/>,
+        element: <Projects />,
+      },
+      {
+        path: "/new-pac",
+        element: <PackageForm />,
       },
       {
         path:"/transactions",
