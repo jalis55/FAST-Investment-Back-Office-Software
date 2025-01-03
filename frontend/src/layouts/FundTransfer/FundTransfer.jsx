@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import Swal from 'sweetalert2';
+import Wrapper from '../Wrapper/Wrapper';
 
 const FundTransfer = () => {
     const [users, setUsers] = useState([]);
@@ -89,70 +90,61 @@ const FundTransfer = () => {
     };
 
     return (
-        <div className="content-wrapper">
-            <div className="row">
-                <div className="col-lg-12 grid-margin stretch-card">
-                    <div className="card">
-                        <div className="card-body">
-                            <h4 className="card-title">Fund Transfer</h4>
-                            <form onSubmit={handleSubmit}>
-                                <div className="form-group">
-                                    <label>From User</label>
-                                    <select
-                                        className="form-control"
-                                        value={fromUser}
-                                        onChange={(e) => setFromUser(e.target.value)}
-                                    >
-                                        <option value="">Select a user</option>
-                                        {users
-                                            .filter((user) => user.id !== Number(toUser))
-                                            .map((user) => (
-                                                <option key={user.id} value={user.id}>
-                                                    {user.name} ({user.email})
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>To User</label>
-                                    <select
-                                        className="form-control"
-                                        value={toUser}
-                                        onChange={(e) => setToUser(e.target.value)}
-                                    >
-                                        <option value="">Select a user</option>
-                                        {users
-                                            .filter((user) => user.id !== Number(fromUser))
-                                            .map((user) => (
-                                                <option key={user.id} value={user.id}>
-                                                    {user.name} ({user.email})
-                                                </option>
-                                            ))}
-                                    </select>
-                                </div>
-
-                                <div className="form-group">
-                                    <label>Amount</label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        value={amount}
-                                        onChange={(e) => setAmount(e.target.value)}
-                                        required
-                                    />
-                                </div>
-
-                                <button type="submit" className="btn btn-info btn-block">
-                                    Proceed
-                                </button>
-                            </form>
-
-                        </div>
-                    </div>
+        <Wrapper>
+            <h4 className="card-title">Fund Transfer</h4>
+            <form onSubmit={handleSubmit}>
+                <div className="form-group">
+                    <label>From User</label>
+                    <select
+                        className="form-control"
+                        value={fromUser}
+                        onChange={(e) => setFromUser(e.target.value)}
+                    >
+                        <option value="">Select a user</option>
+                        {users
+                            .filter((user) => user.id !== Number(toUser))
+                            .map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name} ({user.email})
+                                </option>
+                            ))}
+                    </select>
                 </div>
-            </div>
-        </div>
+
+                <div className="form-group">
+                    <label>To User</label>
+                    <select
+                        className="form-control"
+                        value={toUser}
+                        onChange={(e) => setToUser(e.target.value)}
+                    >
+                        <option value="">Select a user</option>
+                        {users
+                            .filter((user) => user.id !== Number(fromUser))
+                            .map((user) => (
+                                <option key={user.id} value={user.id}>
+                                    {user.name} ({user.email})
+                                </option>
+                            ))}
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label>Amount</label>
+                    <input
+                        type="number"
+                        className="form-control"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        required
+                    />
+                </div>
+
+                <button type="submit" className="btn btn-info btn-block">
+                    Proceed
+                </button>
+            </form>
+        </Wrapper>
     );
 };
 

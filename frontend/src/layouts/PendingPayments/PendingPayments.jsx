@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import api from '../../api';
 import { parseISO, format } from 'date-fns';
 import Swal from 'sweetalert2';
+import Wrapper from '../Wrapper/Wrapper';
 
 const PendingPayments = () => {
     const [pendingPaymentList, setPendingPaymentList] = useState([]);
@@ -60,61 +61,53 @@ const PendingPayments = () => {
     };
 
     return (
-        <div className="content-wrapper">
-            <div className="row">
-                <div className="col-lg-12 grid-margin stretch-card">
-                    <div className="card">
-                        <div className="card-body">
-                            <h4 className="card-title">Pending Payments</h4>
-                            <table className="table table-bordered">
-                                <thead>
-                                    <tr>
-                                        <th> # </th>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th> Amount </th>
-                                        <th>Issued By</th>
-                                        <th>Issued Date</th>
-                                        <th> Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {pendingPaymentList.map((payments) => (
-                                        <tr key={payments.id}>
-                                            <td>{payments.id}</td>
-                                            <td>{payments.user.email}</td>
-                                            <td>{payments.user.name}</td>
-                                            <td>{payments.amount}</td>
-                                            <td>{payments.issued_by.email}</td>
-                                            <td>
-                                                {format(
-                                                    parseISO(payments.issued_date),
-                                                    'MMMM dd, yyyy'
-                                                )}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-success"
-                                                    onClick={() => confirmAction(payments.id, 'approved')}
-                                                >
-                                                    Approve
-                                                </button>
-                                                <button
-                                                    className="btn btn-danger"
-                                                    onClick={() => confirmAction(payments.id, 'declined')}
-                                                >
-                                                    Decline
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        <Wrapper>
+            <h4 className="card-title">Pending Payments</h4>
+            <table className="table table-bordered">
+                <thead>
+                    <tr>
+                        <th> # </th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th> Amount </th>
+                        <th>Issued By</th>
+                        <th>Issued Date</th>
+                        <th> Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {pendingPaymentList.map((payments) => (
+                        <tr key={payments.id}>
+                            <td>{payments.id}</td>
+                            <td>{payments.user.email}</td>
+                            <td>{payments.user.name}</td>
+                            <td>{payments.amount}</td>
+                            <td>{payments.issued_by.email}</td>
+                            <td>
+                                {format(
+                                    parseISO(payments.issued_date),
+                                    'MMMM dd, yyyy'
+                                )}
+                            </td>
+                            <td>
+                                <button
+                                    className="btn btn-success"
+                                    onClick={() => confirmAction(payments.id, 'approved')}
+                                >
+                                    Approve
+                                </button>
+                                <button
+                                    className="btn btn-danger"
+                                    onClick={() => confirmAction(payments.id, 'declined')}
+                                >
+                                    Decline
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </Wrapper>
     );
 };
 
