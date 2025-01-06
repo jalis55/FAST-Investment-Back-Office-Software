@@ -17,7 +17,6 @@ Use the package manager [pip](https://pip.pypa.io/en/stable/) to install depende
 
 ```bash
 pip install -r requirements.txt
-2.python manage.py migrate
 
 ```
 ### Apply Migration
