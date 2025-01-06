@@ -30,7 +30,38 @@ python manage.py migrate
 python manage.py runserver
 
 ```
+## Authentication
+This API uses token-based authentication. A valid token must be included in the Authorization header of requests requiring authentication.
+
+### Obtaining a Token
++ Endpoint: /api/token/
++ Method:  GET
+#### Request body:
+``` json
+{
+  "email": "user@example.com",
+  "password": "yourpassword"
+}
+```
+
+#### Response:
+  + **200 OK**: Returns the access token and refresh token.
+  + Response Body:
+
+``` json
+{ 
+  "access": "your-access-token",
+  "refresh": "your-refresh-token"
+}
+```
+## Using the Token
+Include the token in the Authorization header for authenticated requests:
+```bash
+Authorization: Bearer your-access-token
+```
+
 ## Api Endpoints
+#### User Management
 ### 1. User Registration
 + Endpoint: /api/user-register/
 + Method: POST
