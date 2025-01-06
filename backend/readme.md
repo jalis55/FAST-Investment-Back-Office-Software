@@ -150,7 +150,7 @@ Authorization: Bearer your-access-token
   ...
 ]
 ```
-### 5.Update User Status
+### 6.Update User Status
 + Endpoint: /api/admin/users/id/
 + Method:  GET, PUT, DELETE
 + Permissions: IsSuperUser 
