@@ -11,10 +11,9 @@ const Projects = () => {
     const [advisorDetails, setAdvisorDetails] = useState([]);
     const [investors, setInvestors] = useState([]);
     const [investorDetails, setInvestorDetails] = useState([]);
+    const [advisorForm, setAdvisorForm] = useState({ userId: "", percentage: "" });
+    const [investorForm, setInvestorForm] = useState({ userId: "", amount: "" });
     const [errors, setErrors] = useState("");
-    const [userId, setUserId] = useState("");
-    const [amount, setAmount] = useState("");
-    const [percentage, setPercentage] = useState("");
 
     useEffect(() => {
         api
@@ -24,6 +23,8 @@ const Projects = () => {
     }, []);
 
     const handleAddAdvisor = () => {
+        const { userId, percentage } = advisorForm;
+
         if (!userId || !percentage) {
             Swal.fire("Error!", "Please select an advisor and enter a valid commission percentage.", "error");
             return;
@@ -35,9 +36,9 @@ const Projects = () => {
             return;
         }
 
-        const newAdvisor = { userId: parseInt(userId), percentage: parseFloat(percentage) };
+        const newAdvisor = { advisor: parseInt(userId), com_percentage: parseFloat(percentage) };
 
-        if (advisors.some((advisor) => advisor.userId === newAdvisor.userId)) {
+        if (advisors.some((advisor) => advisor.advisor === newAdvisor.advisor)) {
             Swal.fire("Error!", "Advisor already added.", "error");
             return;
         }
@@ -52,13 +53,13 @@ const Projects = () => {
         setAdvisors((prev) => [...prev, newAdvisor]);
         setAdvisorDetails((prev) => [...prev, newAdvisorDetails]);
 
-        setUserId("");
-        setPercentage("");
-
+        setAdvisorForm({ userId: "", percentage: "" });
         Swal.fire("Success!", "Advisor added successfully!", "success");
     };
 
     const handleAddInvestor = () => {
+        const { userId, amount } = investorForm;
+
         if (!userId || !amount) {
             Swal.fire("Error!", "Please select an investor and enter a valid amount.", "error");
             return;
@@ -70,9 +71,9 @@ const Projects = () => {
             return;
         }
 
-        const newInvestor = { userId: parseInt(userId), amount: parseFloat(amount) };
+        const newInvestor = { investor: parseInt(userId), amount: parseFloat(amount) };
 
-        if (investors.some((investor) => investor.userId === newInvestor.userId)) {
+        if (investors.some((investor) => investor.investor === newInvestor.investor)) {
             Swal.fire("Error!", "Investor already added.", "error");
             return;
         }
@@ -87,9 +88,7 @@ const Projects = () => {
         setInvestors((prev) => [...prev, newInvestor]);
         setInvestorDetails((prev) => [...prev, newInvestorDetails]);
 
-        setUserId("");
-        setAmount("");
-
+        setInvestorForm({ userId: "", amount: "" });
         Swal.fire("Success!", "Investor added successfully!", "success");
     };
 
@@ -112,8 +111,8 @@ const Projects = () => {
         }
 
         if (
-            advisors.some((item) => !item.userId || !item.percentage) ||
-            investors.some((item) => !item.userId || !item.amount)
+            advisors.some((item) => !item.advisor || !item.com_percentage) ||
+            investors.some((item) => !item.investor || !item.amount)
         ) {
             setErrors("All advisor and investor fields must be filled.");
             return;
@@ -122,13 +121,13 @@ const Projects = () => {
         setErrors("");
 
         const formData = {
-            project: {
-                project_title: projectName,
-                project_description: projectDescription,
-            },
-            advisors,
-            investors,
+            project_title: projectName,
+            project_description: projectDescription,
+            financial_advisors: advisors,
+            investments: investors,
         };
+        const pretty = JSON.stringify(formData, null, 2);
+        console.log(pretty);
 
         api.post("/api/stock/projects/", formData)
             .then(() => {
@@ -137,6 +136,8 @@ const Projects = () => {
                 setProjectDescription("");
                 setAdvisors([]);
                 setInvestors([]);
+                setAdvisorDetails([]);
+                setInvestorDetails([]);
             })
             .catch((error) => {
                 console.error("Error submitting form:", error);
@@ -149,6 +150,7 @@ const Projects = () => {
             <h4 className="card-title">Create Project</h4>
             <form className="form-sample" onSubmit={handleSubmit}>
                 <div className="row">
+                    {/* Project Info */}
                     <div className="col-md-6">
                         <p className="card-description">Project Info</p>
                         <div className="form-group">
@@ -171,13 +173,14 @@ const Projects = () => {
                                 onChange={(e) => setProjectDescription(e.target.value)}
                             ></textarea>
                         </div>
+                        {/* Advisor Form */}
                         <p className="card-description">Financial Advisor</p>
                         <div className="form-group">
                             <label>Select Advisor</label>
                             <select
                                 className="form-control"
-                                value={userId}
-                                onChange={(e) => setUserId(e.target.value)}
+                                value={advisorForm.userId}
+                                onChange={(e) => setAdvisorForm((prev) => ({ ...prev, userId: e.target.value }))}
                             >
                                 <option value="">Select Advisor</option>
                                 {users.map((user) => (
@@ -193,20 +196,21 @@ const Projects = () => {
                                 type="number"
                                 className="form-control"
                                 placeholder="Commission"
-                                value={percentage}
-                                onChange={(e) => setPercentage(e.target.value)}
+                                value={advisorForm.percentage}
+                                onChange={(e) => setAdvisorForm((prev) => ({ ...prev, percentage: e.target.value }))}
                             />
                         </div>
                         <button type="button" className="btn btn-primary" onClick={handleAddAdvisor}>
                             Add Advisor
                         </button>
+                        {/* Investor Form */}
                         <p className="card-description mt-4">Investors</p>
                         <div className="form-group">
                             <label>Select Investor</label>
                             <select
                                 className="form-control"
-                                value={userId}
-                                onChange={(e) => setUserId(e.target.value)}
+                                value={investorForm.userId}
+                                onChange={(e) => setInvestorForm((prev) => ({ ...prev, userId: e.target.value }))}
                             >
                                 <option value="">Select Investor</option>
                                 {users.map((user) => (
@@ -222,14 +226,15 @@ const Projects = () => {
                                 type="number"
                                 className="form-control"
                                 placeholder="Amount"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
+                                value={investorForm.amount}
+                                onChange={(e) => setInvestorForm((prev) => ({ ...prev, amount: e.target.value }))}
                             />
                         </div>
                         <button type="button" className="btn btn-primary" onClick={handleAddInvestor}>
                             Add Investor
                         </button>
                     </div>
+                    {/* Advisor and Investor Lists */}
                     <div className="col-md-6">
                         <h4>Financial Advisors</h4>
                         {advisorDetails.length > 0 ? (
@@ -279,7 +284,6 @@ const Projects = () => {
                                             <td>{investor.name}</td>
                                             <td>{investor.email}</td>
                                             <td>{investor.amount}</td>
-                                            
                                             <td>
                                                 <button
                                                     type="button"
@@ -298,6 +302,7 @@ const Projects = () => {
                         )}
                     </div>
                 </div>
+                {/* Error Messages */}
                 {errors && <p className="text-danger">{errors}</p>}
                 <button type="submit" className="btn btn-success mt-4">
                     Create Project
