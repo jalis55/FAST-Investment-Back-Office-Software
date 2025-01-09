@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import api from "../../api";
 import Wrapper from "./Wrapper.jsx";
 import Swal from "sweetalert2";
+import InvestmentDetails from "./InvestmentDetails.jsx";
 
 const Projects = () => {
     const [projectName, setProjectName] = useState("");
@@ -47,7 +48,7 @@ const Projects = () => {
             userId: user.id,
             name: user.name,
             email: user.email,
-            percentage: parseFloat(percentage),
+            com_percentage: parseFloat(percentage),
         };
 
         setAdvisors((prev) => [...prev, newAdvisor]);
@@ -90,6 +91,32 @@ const Projects = () => {
 
         setInvestorForm({ userId: "", amount: "" });
         Swal.fire("Success!", "Investor added successfully!", "success");
+    };
+
+    const editAdvisorPercentage = (index, percentage) => {
+        setAdvisors((prevAdvisors) =>
+            prevAdvisors.map((advisor, i) =>
+                i === index ? { ...advisor, com_percentage: percentage } : advisor
+            )
+        );
+        setAdvisorDetails((prevAdvisors) =>
+            prevAdvisors.map((advisor, i) =>
+                i === index ? { ...advisor, com_percentage: percentage } : advisor
+            )
+        );
+    };
+
+    const editInvestorAmount = (index, amount) => {
+        setInvestors((prevInvestors) =>
+            prevInvestors.map((investor, i) =>
+                i === index ? { ...investor, amount: amount } : investor
+            )
+        );
+        setInvestorDetails((prevInvestors) =>
+            prevInvestors.map((investor, i) =>
+                i === index ? { ...investor, amount: amount } : investor
+            )
+        );
     };
 
     const handleDeleteAdvisor = (index) => {
@@ -238,65 +265,17 @@ const Projects = () => {
                     <div className="col-md-6">
                         <h4>Financial Advisors</h4>
                         {advisorDetails.length > 0 ? (
-                            <table className="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Commission %</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {advisorDetails.map((advisor, index) => (
-                                        <tr key={index}>
-                                            <td>{advisor.name}</td>
-                                            <td>{advisor.percentage}</td>
-                                            <td>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-danger btn-sm"
-                                                    onClick={() => handleDeleteAdvisor(index)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <InvestmentDetails userInfo={advisorDetails}
+                                editUserData={editAdvisorPercentage}
+                                deleteUser={handleDeleteAdvisor} />
                         ) : (
                             <p>No advisors added yet.</p>
                         )}
                         <h4>Investors</h4>
                         {investorDetails.length > 0 ? (
-                            <table className="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Email</th>
-                                        <th>Amount</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {investorDetails.map((investor, index) => (
-                                        <tr key={index}>
-                                            <td>{investor.name}</td>
-                                            <td>{investor.email}</td>
-                                            <td>{investor.amount}</td>
-                                            <td>
-                                                <button
-                                                    type="button"
-                                                    className="btn btn-danger btn-sm"
-                                                    onClick={() => handleDeleteInvestor(index)}
-                                                >
-                                                    Delete
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            <InvestmentDetails userInfo={investorDetails}
+                                editUserData={editInvestorAmount}
+                                deleteUser={handleDeleteInvestor} />
                         ) : (
                             <p>No investors added yet.</p>
                         )}
