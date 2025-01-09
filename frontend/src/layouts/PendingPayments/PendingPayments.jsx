@@ -62,51 +62,57 @@ const PendingPayments = () => {
 
     return (
         <Wrapper>
-            <h4 className="card-title">Pending Payments</h4>
-            <table className="table table-bordered">
-                <thead>
-                    <tr>
-                        <th> # </th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th> Amount </th>
-                        <th>Issued By</th>
-                        <th>Issued Date</th>
-                        <th> Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {pendingPaymentList.map((payments) => (
-                        <tr key={payments.id}>
-                            <td>{payments.id}</td>
-                            <td>{payments.user.email}</td>
-                            <td>{payments.user.name}</td>
-                            <td>{payments.amount}</td>
-                            <td>{payments.issued_by.email}</td>
-                            <td>
-                                {format(
-                                    parseISO(payments.issued_date),
-                                    'MMMM dd, yyyy'
-                                )}
-                            </td>
-                            <td>
-                                <button
-                                    className="btn btn-success"
-                                    onClick={() => confirmAction(payments.id, 'approved')}
-                                >
-                                    Approve
-                                </button>
-                                <button
-                                    className="btn btn-danger"
-                                    onClick={() => confirmAction(payments.id, 'declined')}
-                                >
-                                    Decline
-                                </button>
-                            </td>
+            {pendingPaymentList.length === 0 && <h4>No pending payments</h4>}
+            {pendingPaymentList.length > 0 && (
+                <>
+                <h4 className="card-title">Pending Payments</h4>
+                <table className="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th> # </th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th> Amount </th>
+                            <th>Issued By</th>
+                            <th>Issued Date</th>
+                            <th> Action</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {pendingPaymentList.map((payments) => (
+                            <tr key={payments.id}>
+                                <td>{payments.id}</td>
+                                <td>{payments.user.email}</td>
+                                <td>{payments.user.name}</td>
+                                <td>{payments.amount}</td>
+                                <td>{payments.issued_by.email}</td>
+                                <td>
+                                    {format(
+                                        parseISO(payments.issued_date),
+                                        'MMMM dd, yyyy'
+                                    )}
+                                </td>
+                                <td>
+                                    <button
+                                        className="btn btn-success"
+                                        onClick={() => confirmAction(payments.id, 'approved')}
+                                    >
+                                        Approve
+                                    </button>
+                                    <button
+                                        className="btn btn-danger"
+                                        onClick={() => confirmAction(payments.id, 'declined')}
+                                    >
+                                        Decline
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                </>
+            )}
+
         </Wrapper>
     );
 };

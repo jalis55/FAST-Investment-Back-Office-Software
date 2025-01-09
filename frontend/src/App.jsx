@@ -3,17 +3,15 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Home from './layouts/Home/Home.jsx';
-import Default from './pages/Default';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
 import Transactions from './layouts/Transaction/Transactions.jsx';
 import PendingPayments from './layouts/PendingPayments/PendingPayments.jsx';
 import Dashboard from './layouts/Dashboard/Dashboard.jsx';
 import UserList from './layouts/UserList/UserList.jsx';
-import InvesmentChartMonthWide from './components/InvesmentChartMonthWide';
 import FundTransfer from './layouts/FundTransfer/FundTransfer.jsx';
-import PackageForm from './pages/PackageForm';
 import Projects from './layouts/Projects/Projects.jsx';
+import Trade from './layouts/Trade/Trade.jsx';
 
 
 
@@ -40,7 +38,7 @@ const router = createBrowserRouter([
         
       // },
       {
-        index: true,  // This makes Default the default child for the '/' route
+        index: true,  
         path:"/overview",
         element: <Dashboard />,
         
@@ -54,8 +52,8 @@ const router = createBrowserRouter([
         element: <Projects />,
       },
       {
-        path: "/new-pac",
-        element: <PackageForm />,
+        path: "/trade",
+        element: <Trade/>,
       },
       {
         path:"/transactions",

@@ -58,7 +58,7 @@ const InvestmentDetails = ({ userInfo, editUserData, deleteUser }) => {
                                 )}
                             </td>
                             <td>
-                                <button
+                                {/* <button
                                     className="btn btn-primary btn-sm"
                                     onClick={() =>
                                         toggleEditMode(index, user.com_percentage || user.amount)
@@ -68,7 +68,7 @@ const InvestmentDetails = ({ userInfo, editUserData, deleteUser }) => {
                                         (<i class="fa-regular fa-file"></i>)
                                         :
                                         (<i class="fa-regular fa-edit"></i>)}
-                                </button>
+                                </button> */}
                                 <button
                                     className="btn btn-danger btn-sm ms-2"
                                     onClick={() => handleDelete(index)}

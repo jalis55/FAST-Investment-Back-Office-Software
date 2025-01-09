@@ -10,7 +10,7 @@ const SideBarProfile = ({profileImage}) => {
           <div className="dot-indicator bg-success"></div>
         </div>
         <div className="text-wrapper">
-          <p className="profile-name">Allen Moreno</p>
+          <p className="profile-name">Test User</p>
         </div>
       </Link>
     </li>

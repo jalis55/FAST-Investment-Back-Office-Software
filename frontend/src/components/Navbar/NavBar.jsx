@@ -52,11 +52,7 @@ const NavBar = () => {
                                 </div>
                             </li>
                         </ul>
-                        <form className="ml-auto search-form d-none d-md-block" action="#">
-                            <div className="form-group">
-                                <input type="search" className="form-control" placeholder="Search Here" />
-                            </div>
-                        </form>
+
                         <ul className="navbar-nav ml-auto">
                             <li className="nav-item dropdown">
                                 <a className="nav-link count-indicator" id="messageDropdown" href="#" data-toggle="dropdown" aria-expanded="false">

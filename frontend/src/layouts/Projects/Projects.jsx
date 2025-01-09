@@ -58,6 +58,8 @@ const Projects = () => {
         Swal.fire("Success!", "Advisor added successfully!", "success");
     };
 
+
+
     const handleAddInvestor = () => {
         const { userId, amount } = investorForm;
 
@@ -96,28 +98,29 @@ const Projects = () => {
     const editAdvisorPercentage = (index, percentage) => {
         setAdvisors((prevAdvisors) =>
             prevAdvisors.map((advisor, i) =>
-                i === index ? { ...advisor, com_percentage: percentage } : advisor
+                i === index ? { ...advisor, com_percentage: parseFloat(percentage) || 0 } : advisor
             )
         );
-        setAdvisorDetails((prevAdvisors) =>
-            prevAdvisors.map((advisor, i) =>
-                i === index ? { ...advisor, com_percentage: percentage } : advisor
+        setAdvisorDetails((prevDetails) =>
+            prevDetails.map((advisor, i) =>
+                i === index ? { ...advisor, com_percentage: parseFloat(percentage) || 0 } : advisor
             )
         );
     };
-
+    
     const editInvestorAmount = (index, amount) => {
         setInvestors((prevInvestors) =>
             prevInvestors.map((investor, i) =>
-                i === index ? { ...investor, amount: amount } : investor
+                i === index ? { ...investor, amount: parseFloat(amount) || 0 } : investor
             )
         );
-        setInvestorDetails((prevInvestors) =>
-            prevInvestors.map((investor, i) =>
-                i === index ? { ...investor, amount: amount } : investor
+        setInvestorDetails((prevDetails) =>
+            prevDetails.map((investor, i) =>
+                i === index ? { ...investor, amount: parseFloat(amount) || 0 } : investor
             )
         );
     };
+    
 
     const handleDeleteAdvisor = (index) => {
         setAdvisors((prev) => prev.filter((_, i) => i !== index));
@@ -153,8 +156,7 @@ const Projects = () => {
             financial_advisors: advisors,
             investments: investors,
         };
-        const pretty = JSON.stringify(formData, null, 2);
-        console.log(pretty);
+
 
         api.post("/api/stock/projects/", formData)
             .then(() => {

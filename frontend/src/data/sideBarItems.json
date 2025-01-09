@@ -15,6 +15,12 @@
       "role":"admin"
     },
     {
+      "menuName":"Trade",
+      "url":"/trade",
+      "role":"admin"
+    },
+
+    {
       "menuName":"Transaction",
       "url":"/transactions",
       "role":"admin"
