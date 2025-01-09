@@ -20,13 +20,13 @@ const Trade = () => {
 
     const calculateTotals = () => {
         const { investments = [], trades = [] } = projectData;
-    
+
         // Calculate total investment
         const totalInvestment = investments.reduce(
             (sum, investment) => sum + parseFloat(investment.amount || 0),
             0
         );
-    
+
         // Calculate total buy amount
         const totalBuyAmount = trades
             .filter(trade => trade.trns_type === 'buy')
@@ -37,7 +37,7 @@ const Trade = () => {
                     parseFloat(trade.total_commission || 0),
                 0
             );
-    
+
         // Calculate total sell amount
         const totalSellAmount = trades
             .filter(trade => trade.trns_type === 'sell')
@@ -48,11 +48,11 @@ const Trade = () => {
                     parseFloat(trade.total_commission || 0),
                 0
             );
-    
+
         // Update totals state
         setTotals({ totalInvestment, totalBuyAmount, totalSellAmount });
     };
-    
+
 
     const searchProject = async (e) => {
         e.preventDefault();
@@ -92,16 +92,32 @@ const Trade = () => {
             </form>
             {projectData.project_id && (
                 <>
-                <h2 className="card-title mt-2">Project ID: {projectData.project_id}</h2>
-                <div className="row">
-                    <BalanceCard title="Total Investment" amount={totals.totalInvestment} />
-                    <BalanceCard title="Total Buy Amount" amount={totals.totalBuyAmount} />
-                    <BalanceCard title="Total Sell Amount" amount={totals.totalSellAmount} />
-                    <BalanceCard
-                        title="Available Balance"
-                        amount={totals.totalInvestment - totals.totalBuyAmount + totals.totalSellAmount}
-                    />
-                </div>
+                    <h2 className="card-title mt-2">Project ID: {projectData.project_id}</h2>
+                    <div className="row">
+                        <BalanceCard title="Total Investment" amount={totals.totalInvestment} />
+                        <BalanceCard title="Total Buy Amount" amount={totals.totalBuyAmount} />
+                        <BalanceCard title="Total Sell Amount" amount={totals.totalSellAmount} />
+                        <BalanceCard
+                            title="Available Balance"
+                            amount={totals.totalInvestment - totals.totalBuyAmount + totals.totalSellAmount}
+                        />
+                    </div>
+                    <h1 className='card-title mt-4 mb-0'>Trade</h1>
+                    <div className="row">
+                        <div class="col-sm-4">
+                            <div class="form-radio">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="membershipRadios" id="membershipRadios1" value="" checked="" /> Buy Instruments <i class="input-helper"></i></label>
+                            </div>
+                        </div>
+                        
+                        <div class="col-sm-4">
+                            <div class="form-radio">
+                                <label class="form-check-label">
+                                    <input type="radio" class="form-check-input" name="membershipRadios" id="membershipRadios1" value="" checked="" /> Sell Instruments <i class="input-helper"></i></label>
+                            </div>
+                        </div>
+                    </div>
                 </>
             )}
         </Wrapper>
