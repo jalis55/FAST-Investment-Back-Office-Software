@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import api from "../../api";
-import Wrapper from "./Wrapper.jsx";
+// import Wrapper from "./Wrapper.jsx";
+import Wrapper from "../Wrapper/Wrapper.jsx";
 import Swal from "sweetalert2";
 import InvestmentDetails from "./InvestmentDetails.jsx";
 
