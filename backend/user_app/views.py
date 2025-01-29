@@ -5,6 +5,8 @@ from rest_framework.generics import CreateAPIView,RetrieveUpdateAPIView,ListAPIV
 from user_app.serializers import UserSerializer,UserListSerializer,UserStatusSerializer
 from user_app.models import CustomUser
 from rest_framework.response import Response
+from rest_framework.documentation import include_docs_urls
+from django.urls import path
 
 # Create your views here.
 
@@ -49,3 +51,5 @@ class UpdateUserStatusView(RetrieveUpdateDestroyAPIView):
     queryset = CustomUser.objects.filter(is_superuser=False)
     serializer_class=UserListSerializer
     permission_classes=[IsSuperUser]
+
+

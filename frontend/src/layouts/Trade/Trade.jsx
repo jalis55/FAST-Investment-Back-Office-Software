@@ -73,7 +73,7 @@ const Trade = () => {
 
         try {
             const res = await api.get(`/api/stock/projects/${searchId}/`);
-            console.log(res.data);
+ 
             setProjectData(res.data);
         } catch (err) {
             console.error(err);
@@ -100,12 +100,9 @@ const Trade = () => {
        
     };
 
-
     const handleSellAction = () => {
         console.log('Executing sell action...');
-        console.log(projectData);
-    
-        // Ensure projectData exists and has trades
+
         if (!projectData || !projectData.trades) {
             console.error("No trades data available");
             return;
@@ -116,31 +113,30 @@ const Trade = () => {
     
         // Process buy trades
         const groupedTrades = buyTrades.reduce((acc, trade) => {
-            const { instrument_name, qty, unit_price } = trade;
+            const { instrument_id, instrument_name, qty, actual_unit_price } = trade;
     
-            if (!acc[instrument_name]) {
-                acc[instrument_name] = { instrument_name, qty: 0, total_price: 0 };
+            if (!acc[instrument_id]) {
+                acc[instrument_id] = { instrument_id, instrument_name, qty: 0, total_price: 0 };
             }
     
-            acc[instrument_name].qty += qty;
-            acc[instrument_name].total_price += qty * parseFloat(unit_price);
+            acc[instrument_id].qty += qty;
+            acc[instrument_id].total_price += qty * parseFloat(actual_unit_price);
     
             return acc;
         }, {});
     
         // Convert to desired format
         const result = Object.values(groupedTrades).map(trade => ({
+            instrument_id: trade.instrument_id,
             instrument_name: trade.instrument_name,
             qty: trade.qty,
             unit_price: (trade.total_price / trade.qty).toFixed(2) // Weighted Average
         }));
     
-        console.log("Processed Buy Trades:", result);
-
         setSellAbleInstruments(result);
-    
-        // You can now use `result` for further operations (e.g., updating state, sending to API, etc.)
     };
+    
+    
     
 
     return (
@@ -204,8 +200,8 @@ const Trade = () => {
                         </div>
                     </div>
 
-                    {tradeType === 'buy' && <BuyInstrument instruments={buyAbleInstruments} />}
-                    {tradeType === 'sell' && <SellInstrument instruments={sellAbleInstruments} />}
+                    {tradeType === 'buy' && <BuyInstrument instruments={buyAbleInstruments} project={projectData.project_id} />}
+                    {tradeType === 'sell' && <SellInstrument instruments={sellAbleInstruments} project={projectData.project_id} />}
                 </>
             )}
         </Wrapper>

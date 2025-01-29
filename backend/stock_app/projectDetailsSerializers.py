@@ -1,13 +1,13 @@
 
 from rest_framework import serializers
-from .serializers import FinancialAdvisorSerializer,InvestmentSerializer,TradeSerializer
+from .serializers import FinancialAdvisorSerializer,InvestmentSerializer,TradeDetailsSerializer
 from .models import Project,FinancialAdvisor,Investment
 
 
 class ProjectDetailsSerializer(serializers.ModelSerializer):
     financial_advisors = FinancialAdvisorSerializer(many=True, read_only=True)
     investments = InvestmentSerializer(many=True, read_only=True)
-    trades = TradeSerializer(many=True, read_only=True)  # Assuming 'trades' is a related name
+    trades = TradeDetailsSerializer(many=True, read_only=True)  
 
     class Meta:
         model = Project

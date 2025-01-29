@@ -55,7 +55,6 @@ class Instrument(models.Model):
         return self.name
 
 class Trade(models.Model):
-
     BUY = 'buy'
     SELL = 'sell'
 
@@ -65,19 +64,37 @@ class Trade(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE,related_name='trades')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='trades')
     instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
     trns_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     qty = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
-    trade_date = models.DateField()
-    howla = models.DecimalField(max_digits=10, decimal_places=2)
-    laga = models.DecimalField(max_digits=10, decimal_places=2)
-    ait = models.DecimalField(max_digits=10, decimal_places=2)
-    total_commission= models.DecimalField(max_digits=10, decimal_places=2)
-    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='investor')
+    actual_unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
+    trade_date = models.DateField(auto_now_add=True)
+    total_commission = models.DecimalField(max_digits=10, decimal_places=2)
+    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='investor')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def calculate_actual_unit_price(self):
+        """Calculates and sets the actual unit price."""
+        if self.qty == 0:
+            return None  # Avoid division by zero
+
+        if self.trns_type == self.BUY:
+            price = ((self.qty * self.unit_price) + self.total_commission) / self.qty
+        elif self.trns_type == self.SELL:
+            price = ((self.qty * self.unit_price) - self.total_commission) / self.qty
+        else:
+            return None
+
+        self.actual_unit_price = round(price, 2)
+        return self.actual_unit_price  # Return for immediate use if needed
+
+    def save(self, *args, **kwargs):
+        """Override save() to automatically compute actual_unit_price before saving."""
+        self.calculate_actual_unit_price()
+        super().save(*args, **kwargs)
 
     def __str__(self) -> str:
         return str(self.id)

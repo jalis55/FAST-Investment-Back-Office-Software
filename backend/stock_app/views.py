@@ -1,8 +1,9 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated,AllowAny
-from .models import Project
+from .models import Project, Instrument,Trade
 from .projectserializers import ProjectSerializer
 from .projectDetailsSerializers import ProjectDetailsSerializer
+from .serializers import InstrumentSerializer,TradeSerializer
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
@@ -27,3 +28,18 @@ class ProjectDetailView(generics.RetrieveAPIView):
     queryset = Project.objects.prefetch_related('financial_advisors', 'investments', 'trades')
     serializer_class = ProjectDetailsSerializer
     permission_classes=[AllowAny]
+
+class InstrumentListView(generics.ListAPIView):
+    queryset = Instrument.objects.all()
+    serializer_class = InstrumentSerializer
+    permission_classes = [AllowAny]  # Allow any user to view instruments
+
+
+class TradeCreateView(generics.CreateAPIView):
+    queryset = Trade.objects.all()
+    serializer_class = TradeSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(authorized_by=self.request.user)
+

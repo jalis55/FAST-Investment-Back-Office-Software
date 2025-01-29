@@ -15,6 +15,8 @@ from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from django.db import transaction as db_transaction
 from django.utils import timezone
+from decimal import Decimal
+
 
 class AllUserBalanceDetailsView(generics.ListAPIView):
     queryset=Account.objects.all()
@@ -40,7 +42,7 @@ class CheckBalanceView(generics.RetrieveAPIView):
 class TransactionCreateView(generics.CreateAPIView):
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAdminUser ]
 
     @db_transaction.atomic  # Ensure atomicity
     def perform_create(self, serializer):
@@ -52,19 +54,29 @@ class TransactionCreateView(generics.CreateAPIView):
                 issued_date=timezone.now()
             )
         
-            # Get the user's account and update balance if transaction is a deposit
+            # Process deposit transactions
             if transaction.transaction_type == 'deposit':
-                account = Account.objects.get(user=transaction.user)
-                account.update_balance(transaction.amount, 'deposit')
+                # Get or create the user's account
+                account, created = Account.objects.get_or_create(user=transaction.user)
+
+                # If the account was newly created, you might want to initialize the balance
+                if created:
+                    account.balance = Decimal('0.00')  # Ensure balance is Decimal
+                    account.save()
+
+                # Convert the transaction amount to Decimal if it's not already
+                amount = Decimal(transaction.amount)  # Ensure amount is Decimal
+                
+                # Update the account balance for the deposit
+                account.update_balance(amount, 'deposit')
 
                 # Mark transaction as completed if successful
                 transaction.status = 'completed'
-                transaction.narration=f"Deposit amount {transaction.amount} has successful"
+                transaction.narration = f"Deposit amount {amount} has been successful"
                 transaction.save()
         
-        except Account.DoesNotExist:
-            raise ValidationError({"detail": "Account not found for the user."})
         except Exception as e:
+            # Handle any exceptions, including those related to account creation
             raise ValidationError({"detail": f"Transaction failed: {str(e)}"})
         
 
@@ -120,6 +132,10 @@ class FundTransferView(generics.CreateAPIView):
 
         transfer_to=transaction.transfer_to
         transfer_form=transaction.transfer_from
+        transfer_to_account,created=Account.objects.get_or_create(user=transfer_to)
+        if created:
+            transfer_to_account.balance=Decimal(0.00)
+            transfer_to_account.save()
 
         transfee=transfer_to.account
         transferor=transfer_form.account
