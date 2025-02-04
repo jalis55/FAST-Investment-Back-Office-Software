@@ -12,6 +12,9 @@ import UserList from './layouts/UserList/UserList.jsx';
 import FundTransfer from './layouts/FundTransfer/FundTransfer.jsx';
 import Projects from './layouts/Projects/Projects.jsx';
 import Trade from './layouts/Trade/Trade.jsx';
+import BuyInstrument from './layouts/Trade/BuyInstrument.jsx';
+import SellInstrument from './layouts/Trade/SellInstrument.jsx';
+import AddInvestment from './layouts/Investment/AddInvestment.jsx';
 
 
 
@@ -52,12 +55,20 @@ const router = createBrowserRouter([
         element: <Projects />,
       },
       {
-        path: "/trade",
-        element: <Trade/>,
+        path:"/buy-instrument",
+        element:<BuyInstrument/>,
+      },
+      {
+        path:"/sell-instrument",
+        element:<SellInstrument/>,
       },
       {
         path:"/transactions",
         element:<Transactions/>,
+      },
+      {
+        path:"/add-investment",
+        element:<AddInvestment/>
       },
       {
         path:"/pending-payments",

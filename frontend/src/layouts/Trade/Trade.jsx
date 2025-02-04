@@ -10,12 +10,10 @@ const Trade = () => {
     const [projectData, setProjectData] = useState({});
     const [buyAbleInstruments, setBuyAbleInstruments] = useState([]);
     const [sellAbleInstruments, setSellAbleInstruments] = useState([]);
-
-    const [totals, setTotals] = useState({
-        totalInvestment: 0,
-        totalBuyAmount: 0,
-        totalSellAmount: 0,
-    });
+    const [totalInvestment, setTotalInvestment] = useState(0);
+    const [totalBuyAmount, setTotalBuyAmount] = useState(0);
+    const [totalSellAmount, setTotalSellAmount] = useState(0);
+    const [availableBalance, setAvailableBalance] = useState(0);
     const [tradeType, setTradeType] = useState('');
 
     useEffect(() => {
@@ -26,182 +24,146 @@ const Trade = () => {
 
     useEffect(() => {
         if (tradeType === 'buy') {
-            handleBuyAction();
+            fetchBuyInstruments();
         } else if (tradeType === 'sell') {
-            handleSellAction();
+            processSellInstruments();
         }
     }, [tradeType]);
+
+    useEffect(() => {
+        setAvailableBalance((totalInvestment + totalSellAmount) - totalBuyAmount);
+    }, [totalInvestment, totalSellAmount, totalBuyAmount]);
 
     const calculateTotals = () => {
         const { investments = [], trades = [] } = projectData;
 
-        const totalInvestment = investments.reduce(
-            (sum, investment) => sum + parseFloat(investment.amount || 0),
-            0
+        const totalInvestmentAmt = investments.reduce(
+            (sum, investment) => sum + parseFloat(investment.amount || 0), 0
         );
 
-        const totalBuyAmount = trades
+        const totalBuyAmt = trades
             .filter(trade => trade.trns_type === 'buy')
-            .reduce(
-                (sum, trade) =>
-                    sum +
-                    trade.qty * parseFloat(trade.unit_price || 0) +
-                    parseFloat(trade.total_commission || 0),
-                0
-            );
+            .reduce((sum, trade) => sum + trade.qty * parseFloat(trade.unit_price || 0) + parseFloat(trade.total_commission || 0), 0) || 0;
 
-        const totalSellAmount = trades
+        const totalSellAmt = trades
             .filter(trade => trade.trns_type === 'sell')
-            .reduce(
-                (sum, trade) =>
-                    sum +
-                    trade.qty * parseFloat(trade.unit_price || 0) -
-                    parseFloat(trade.total_commission || 0),
-                0
-            );
+            .reduce((sum, trade) => sum + trade.qty * parseFloat(trade.unit_price || 0) - parseFloat(trade.total_commission || 0), 0) || 0;
 
-        setTotals({ totalInvestment, totalBuyAmount, totalSellAmount });
+        setTotalInvestment(totalInvestmentAmt);
+        setTotalBuyAmount(totalBuyAmt);
+        setTotalSellAmount(totalSellAmt);
     };
 
     const searchProject = async (e) => {
         e.preventDefault();
-
         if (!searchId.trim()) {
             alert('Please enter a project ID');
             return;
         }
-
         try {
             const res = await api.get(`/api/stock/projects/${searchId}/`);
- 
             setProjectData(res.data);
         } catch (err) {
             console.error(err);
             alert('Error fetching project data');
         }
-
         setSearchId('');
     };
 
-    const handleTradeTypeChange = (e) => {
-        setTradeType(e.target.value);
-    };
+    const handleTradeTypeChange = (e) => setTradeType(e.target.value);
 
-    const handleBuyAction = async () => {
-        console.log('Fetching buy instrument data...');
+    const fetchBuyInstruments = async () => {
         try {
-            api
-            .get("/api/stock/instruments/")
-            .then((response) => setBuyAbleInstruments(response.data))
-            .catch((error) => console.error("Error fetching users:", error));
+            const response = await api.get("/api/stock/instruments/");
+            setBuyAbleInstruments(response.data);
         } catch (err) {
             console.error('Error fetching buy options:', err);
         }
-       
     };
 
-    const handleSellAction = () => {
-        console.log('Executing sell action...');
+    const processSellInstruments = () => {
+        if (!projectData?.trades) return;
 
-        if (!projectData || !projectData.trades) {
-            console.error("No trades data available");
-            return;
-        }
-    
-        // Filter only "buy" trades
         const buyTrades = projectData.trades.filter(trade => trade.trns_type === "buy");
-    
-        // Process buy trades
+
         const groupedTrades = buyTrades.reduce((acc, trade) => {
             const { instrument_id, instrument_name, qty, actual_unit_price } = trade;
-    
+
             if (!acc[instrument_id]) {
                 acc[instrument_id] = { instrument_id, instrument_name, qty: 0, total_price: 0 };
             }
-    
+
             acc[instrument_id].qty += qty;
             acc[instrument_id].total_price += qty * parseFloat(actual_unit_price);
-    
+
             return acc;
         }, {});
-    
-        // Convert to desired format
+
         const result = Object.values(groupedTrades).map(trade => ({
             instrument_id: trade.instrument_id,
             instrument_name: trade.instrument_name,
             qty: trade.qty,
-            unit_price: (trade.total_price / trade.qty).toFixed(2) // Weighted Average
+            unit_price: (trade.total_price / trade.qty).toFixed(2)
         }));
-    
+
         setSellAbleInstruments(result);
     };
-    
-    
-    
+
+    const handleBuySuccess = (buyAmt) => {
+        setTotalBuyAmount(prev => {
+            const newTotalBuy = prev + buyAmt;
+            setAvailableBalance((totalInvestment + totalSellAmount) - newTotalBuy);
+            return newTotalBuy;
+        });
+    };
 
     return (
         <Wrapper>
             <form className="ml-auto search-form d-md-block" onSubmit={searchProject}>
                 <div className="form-group">
-                    <input
-                        type="search"
-                        className="form-control"
-                        placeholder="Search Project"
-                        value={searchId}
-                        onChange={(e) => setSearchId(e.target.value)}
-                    />
+                    <input type="search" className="form-control" placeholder="Search Project"
+                        value={searchId} onChange={(e) => setSearchId(e.target.value)} />
                 </div>
-                <button className="btn btn-primary" type="submit">
-                    Search
-                </button>
+                <button className="btn btn-primary" type="submit">Search</button>
             </form>
+
             {projectData.project_id && (
                 <>
                     <h2 className="card-title mt-2">Project ID: {projectData.project_id}</h2>
                     <div className="row">
-                        <BalanceCard title="Total Investment" amount={totals.totalInvestment} />
-                        <BalanceCard title="Total Buy Amount" amount={totals.totalBuyAmount} />
-                        <BalanceCard title="Total Sell Amount" amount={totals.totalSellAmount} />
-                        <BalanceCard
-                            title="Available Balance"
-                            amount={totals.totalInvestment - totals.totalBuyAmount + totals.totalSellAmount}
-                        />
+                        <BalanceCard title="Total Investment" amount={totalInvestment} />
+                        <BalanceCard title="Total Buy Amount" amount={totalBuyAmount} />
+                        <BalanceCard title="Total Sell Amount" amount={totalSellAmount} />
+                        <BalanceCard title="Available Balance" amount={availableBalance} />
                     </div>
+
                     <h1 className='card-title mt-4 mb-0'>Trade</h1>
                     <div className="row">
                         <div className="col-sm-4">
-                            <div className="form-radio">
-                                <label className="form-check-label">
-                                    <input
-                                        type="radio"
-                                        className="form-check-input"
-                                        name="membershipRadios"
-                                        value="buy"
-                                        checked={tradeType === 'buy'}
-                                        onClick={handleTradeTypeChange}
-                                    /> Buy Instruments <i className="input-helper"></i>
-                                </label>
-                            </div>
+                            <label className="form-check-label">
+                                <input type="radio" className="form-check-input" name="membershipRadios"
+                                    value="buy" checked={tradeType === 'buy'} onChange={handleTradeTypeChange} /> Buy Instruments
+                            </label>
                         </div>
-
                         <div className="col-sm-4">
-                            <div className="form-radio">
-                                <label className="form-check-label">
-                                    <input
-                                        type="radio"
-                                        className="form-check-input"
-                                        name="membershipRadios"
-                                        value="sell"
-                                        checked={tradeType === 'sell'}
-                                        onClick={handleTradeTypeChange}
-                                    /> Sell Instruments <i className="input-helper"></i>
-                                </label>
-                            </div>
+                            <label className="form-check-label">
+                                <input type="radio" className="form-check-input" name="membershipRadios"
+                                    value="sell" checked={tradeType === 'sell'} onChange={handleTradeTypeChange} /> Sell Instruments
+                            </label>
                         </div>
                     </div>
 
-                    {tradeType === 'buy' && <BuyInstrument instruments={buyAbleInstruments} project={projectData.project_id} />}
-                    {tradeType === 'sell' && <SellInstrument instruments={sellAbleInstruments} project={projectData.project_id} />}
+                    {tradeType === 'buy' && <BuyInstrument 
+                        instruments={buyAbleInstruments} 
+                        project={projectData.project_id} 
+                        availableBalance={availableBalance}
+                        handleBuySuccess={handleBuySuccess} 
+                    />}
+
+                    {tradeType === 'sell' && <SellInstrument 
+                        instruments={sellAbleInstruments} 
+                        project={projectData.project_id} 
+                    />}
                 </>
             )}
         </Wrapper>

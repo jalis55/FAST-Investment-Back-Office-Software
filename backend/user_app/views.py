@@ -43,7 +43,7 @@ class UserListView(ListAPIView):
     permission_classes = [IsSuperUser]  # Only allow superusers to access this view
 
 class CustomerListView(ListAPIView):
-    queryset=CustomUser.objects.filter(is_superuser=False,is_staff=False)
+    queryset=CustomUser.objects.filter(is_superuser=False,is_staff=False,is_active=True)
     serializer_class=UserListSerializer
     permission_classes=[IsAdminUser]
 

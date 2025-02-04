@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from accounting.models import Account,Transaction
-from .serializers import FinancialAdvisorSerializer,InvestmentSerializer
+from .serializers import FinancialAdvisorSerializer,InvestmentDetailsSerializer
 from .models import Project,FinancialAdvisor,Investment
 
 
@@ -10,7 +10,7 @@ from .models import Project,FinancialAdvisor,Investment
 
 class ProjectSerializer(serializers.ModelSerializer):
     financial_advisors = FinancialAdvisorSerializer(many=True, required=False)
-    investments = InvestmentSerializer(many=True, required=False)
+    investments = InvestmentDetailsSerializer(many=True, required=False)
 
     class Meta:
         model = Project
@@ -66,3 +66,7 @@ class ProjectSerializer(serializers.ModelSerializer):
                 )
 
         return project
+    
+class ProjectBalanceSerializer(serializers.Serializer):
+    project_id = serializers.CharField()
+    available_balance = serializers.DecimalField(max_digits=10, decimal_places=2)

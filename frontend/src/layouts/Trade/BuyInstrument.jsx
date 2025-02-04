@@ -1,151 +1,224 @@
 import React, { useState } from 'react';
-import Swal from "sweetalert2"; // Import SweetAlert2
-import api from '../../api'; // Assuming your axios API setup is here
+import Swal from "sweetalert2";
+import Wrapper from '../Wrapper/Wrapper';
+import api from '../../api';
 
-const BuyInstrument = ({ instruments, project }) => {
+const BuyInstrument = () => {
+    const [searchId, setSearchId] = useState('');
+    const [projectId, setProjectId] = useState('');
+    const [availableBalance, setAvailableBalance] = useState(0);
+    const [instruments, setInstruments] = useState([]);
     const [selectedInstrument, setSelectedInstrument] = useState('');
     const [qty, setQty] = useState('');
     const [unitPrice, setUnitPrice] = useState('');
     const [totalComm, setTotalComm] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Fetch Project Balance
+    const searchProject = async (e) => {
+        e.preventDefault();
+
+        if (!searchId.trim()) {
+            Swal.fire({ icon: 'warning', title: 'Input Required', text: 'Please enter a project ID!' });
+            return;
+        }
+
+        try {
+            const response = await api.get(`/api/stock/project-balance/${searchId}/`);
+            setProjectId(response.data.project_id);
+            const availableBal = parseFloat(response.data.available_balance);
+            setAvailableBalance(availableBal);
+
+            if (availableBal > 0 && instruments.length === 0) {
+                fetchInstruments();
+            } else if (availableBal <= 0) {
+                Swal.fire({ icon: 'error', title: 'Insufficient Balance', text: "You don't have enough balance to buy." });
+            }
+        } catch (error) {
+            console.error("Error fetching project data:", error);
+            Swal.fire({ icon: 'error', title: 'API Error', text: error.response?.data?.message || 'Something went wrong.' });
+        }
+    };
+
+    // Fetch Available Instruments
+    const fetchInstruments = async () => {
+        try {
+            const response = await api.get(`/api/stock/instruments/`);
+            setInstruments(response.data);
+        } catch (error) {
+            console.error("Error fetching instruments:", error);
+            Swal.fire({ icon: 'error', title: 'Error', text: 'Failed to load instruments.' });
+        }
+    };
+
+    // Validate inputs
+    const validateInputs = () => {
+        const parsedQty = parseInt(qty);
+        const parsedUnitPrice = parseFloat(unitPrice);
+        const parsedTotalComm = parseFloat(totalComm);
+
+        if (!selectedInstrument) {
+            Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select an instrument.' });
+            return false;
+        }
+
+        if (isNaN(parsedQty) || parsedQty <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Invalid Quantity', text: 'Quantity must be a positive number.' });
+            return false;
+        }
+
+        if (isNaN(parsedUnitPrice) || parsedUnitPrice <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Invalid Unit Price', text: 'Unit Price must be a positive number.' });
+            return false;
+        }
+
+        if (isNaN(parsedTotalComm) || parsedTotalComm < 0) {
+            Swal.fire({ icon: 'warning', title: 'Invalid Commission', text: 'Total Commission cannot be negative.' });
+            return false;
+        }
+
+        const totalCost = parsedQty * parsedUnitPrice + parsedTotalComm;
+        if (totalCost > availableBalance) {
+            Swal.fire({ icon: 'error', title: 'Insufficient Funds', text: 'Your balance is not enough to complete this purchase.' });
+            return false;
+        }
+
+        return true;
+    };
+
+    // Handle Instrument Purchase Submission
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Perform field validation
-        if (!selectedInstrument || !qty || !unitPrice || !totalComm) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Validation Error',
-                text: 'All fields must be filled out correctly!',
-            });
-            return;
-        }
-
-        // Make sure quantity is valid
-        if (qty <= 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Quantity',
-                text: 'Please enter a positive quantity.',
-            });
-            return;
-        }
-
-        // Ensure unit price and total commission are valid numbers
-        if (isNaN(unitPrice) || isNaN(totalComm) || unitPrice <= 0 || totalComm < 0) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Values',
-                text: 'Please enter valid positive numbers for unit price and commission.',
-            });
+        if (!validateInputs()) {
             return;
         }
 
         setLoading(true);
 
-        // Prepare the data for the API request
         const tradeData = {
-            project: project, // Assuming project is passed as prop
+            project: projectId,
             instrument: selectedInstrument,
-            qty: qty,
+            qty: parseInt(qty),
             unit_price: parseFloat(unitPrice),
-            trns_type: 'buy', // Set transaction type as 'buy'
+            trns_type: 'buy',
             total_commission: parseFloat(totalComm),
         };
 
         try {
-            const response = await api.post('/api/stock/create-trade/', tradeData);
-            console.log('Trade created successfully:', response.data);
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Trade created successfully!',
+            await api.post('/api/stock/create-trade/', tradeData);
+
+            setAvailableBalance((prevBalance) => {
+                const buyAmt = (parseInt(qty) * parseFloat(unitPrice)) + parseFloat(totalComm);
+                return prevBalance - buyAmt;
             });
-            // Optionally reset form or redirect
+
+            Swal.fire({ icon: 'success', title: 'Success', text: 'Instrument purchase successful!' });
+
+            // Reset Form
             setSelectedInstrument('');
             setQty('');
             setUnitPrice('');
             setTotalComm('');
-        } catch (err) {
-            console.error('Error creating trade:', err);
-            Swal.fire({
-                icon: 'error',
-                title: 'Transaction Failed',
-                text: 'There was an error processing your trade. Please try again later.',
-            });
+        } catch (error) {
+            console.error("Error purchasing instrument:", error);
+            Swal.fire({ icon: 'error', title: 'Purchase Failed', text: error.response?.data?.message || 'Transaction failed.' });
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <>
-            <p className="card-description">Buy Instrument</p>
-            <div className="form-group">
-                <form className="forms-sample" onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label>Select Instrument</label>
-                        <select
-                            className="form-control"
-                            value={selectedInstrument}
-                            onChange={(e) => setSelectedInstrument(e.target.value)}
-                        >
-                            <option value="">Select Instrument</option>
-                            {instruments.map((instrument) => (
-                                <option key={instrument.id} value={instrument.id}>
-                                    {instrument.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+        <Wrapper>
+            {/* Project Search Form */}
+            <form className="ml-auto search-form d-md-block" onSubmit={searchProject}>
+                <div className="form-group">
+                    <input
+                        type="search"
+                        className="form-control"
+                        placeholder="Search Project"
+                        value={searchId}
+                        onChange={(e) => setSearchId(e.target.value)}
+                    />
+                </div>
+                <button className="btn btn-primary" type="submit">Search</button>
+            </form>
 
-                    <div className="form-group">
-                        <label htmlFor="qty">Quantity</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="qty"
-                            placeholder="Enter total qty"
-                            value={qty}
-                            onChange={(e) => setQty(e.target.value)}
-                            min="1"
-                        />
-                    </div>
+            {/* Instrument Purchase Form */}
+            {projectId && availableBalance > 0 && (
+                <>
+                    <h3 className="card-description">Balance: {availableBalance.toFixed(2)}</h3>
+                    <p className="card-description">Buy Instrument</p>
+                    <form className="forms-sample" onSubmit={handleSubmit}>
+                        <div className="form-group">
+                            <label>Select Instrument</label>
+                            <select
+                                className="form-control"
+                                value={selectedInstrument}
+                                onChange={(e) => setSelectedInstrument(e.target.value)}
+                            >
+                                <option value="">Select Instrument</option>
+                                {instruments.map((instrument) => (
+                                    <option key={instrument.id} value={instrument.id}>
+                                        {instrument.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
 
-                    <div className="form-group">
-                        <label htmlFor="unitPrice">Unit Price</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="unitPrice"
-                            placeholder="Enter unit price"
-                            value={unitPrice}
-                            onChange={(e) => setUnitPrice(e.target.value)}
-                        />
-                    </div>
+                        <div className="form-group">
+                            <label>Quantity</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                placeholder="Enter total qty"
+                                value={qty}
+                                onChange={(e) => setQty(e.target.value)}
+                                min="1"
+                            />
+                        </div>
 
-                    <div className="form-group">
-                        <label htmlFor="totalComm">Total Commission</label>
-                        <input
-                            type="number"
-                            className="form-control"
-                            id="totalComm"
-                            placeholder="Enter total commission"
-                            value={totalComm}
-                            onChange={(e) => setTotalComm(e.target.value)}
-                        />
-                    </div>
+                        <div className="form-group">
+                            <label>Unit Price</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                placeholder="Enter unit price"
+                                value={unitPrice}
+                                onChange={(e) => setUnitPrice(e.target.value)}
+                                min="0.01"
+                                step="0.01"
+                            />
+                        </div>
 
-                    <button type="submit" className="btn btn-success mr-2" disabled={loading}>
-                        {loading ? 'Submitting...' : 'Submit'}
-                    </button>
-                    <button type="button" className="btn btn-light" onClick={() => setSelectedInstrument('')}>
-                        Cancel
-                    </button>
-                </form>
-            </div>
-        </>
+                        <div className="form-group">
+                            <label>Total Commission</label>
+                            <input
+                                type="number"
+                                className="form-control"
+                                placeholder="Enter total commission"
+                                value={totalComm}
+                                onChange={(e) => setTotalComm(e.target.value)}
+                                min="0"
+                                step="0.01"
+                            />
+                        </div>
+
+                        <button type="submit" className="btn btn-success mr-2" disabled={loading}>
+                            {loading ? 'Submitting...' : 'Submit'}
+                        </button>
+                        <button type="button" className="btn btn-light" onClick={() => {
+                            setSelectedInstrument('');
+                            setQty('');
+                            setUnitPrice('');
+                            setTotalComm('');
+                        }}>
+                            Cancel
+                        </button>
+                    </form>
+                </>
+            )}
+        </Wrapper>
     );
 };
 

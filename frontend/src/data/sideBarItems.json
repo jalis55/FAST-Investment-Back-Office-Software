@@ -15,14 +15,24 @@
       "role":"admin"
     },
     {
-      "menuName":"Trade",
-      "url":"/trade",
+      "menuName":"Buy Instrument",
+      "url":"/buy-instrument",
+      "role":"admin"
+    },
+    {
+      "menuName":"Sell Instrument",
+      "url":"/sell-instrument",
       "role":"admin"
     },
 
     {
       "menuName":"Transaction",
       "url":"/transactions",
+      "role":"admin"
+    },
+    {
+      "menuName":"Add Investment",
+      "url":"/add-investment",
       "role":"admin"
     },
     {
@@ -35,8 +45,6 @@
       "url":"/pending-payments",
       "role":"admin"
     },
-    
-    
 
     {
       "menuName": "Logout",
