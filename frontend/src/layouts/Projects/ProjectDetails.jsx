@@ -6,12 +6,18 @@ import InvestmentPieChart from './InvestmentPieChart';
 import TradeBarChart from './TradeBarChart';
 import TradeDetails from './TradeDetails';
 import InvestorDetails from './InvestorDetails';
+import ProjectFinDetails from './ProjectFinDetails';
+import FinCardBody from './FinCardBody';
 
 const ProjectDetails = () => {
     const [searchId, setSearchId] = useState('');
     const [investorInvestments, setInvestorInvestments] = useState([]);
     const [tradeDetails, setTradeDetails] = useState([]);
     const [projectId, setProjectId] = useState('');
+    const [gainLoss, setGainLoss] = useState({ profit: 0, loss: 0 });
+    const [totalInvestment, setTotalInvestment] = useState(0);
+    const [totalBuyAmount, setTotalBuyAmount] = useState(0);
+    const [totalSellAmount, setTotalSellAmount] = useState(0);
 
     const searchProject = async (e) => {
         e.preventDefault();
@@ -26,6 +32,7 @@ const ProjectDetails = () => {
             setProjectId(searchId);
             processInvestmentData(response.data);
             processTradeData(response.data);
+            processFinDetails(response.data);
         } catch (error) {
             console.error("Error fetching project data:", error);
             Swal.fire({
@@ -91,24 +98,41 @@ const ProjectDetails = () => {
                     instrument_name,
                     total_buy: 0,
                     total_sell: 0,
-                    total_qty_buy:0,
-                    total_qty_sell:0
+                    total_qty_buy: 0,
+                    total_qty_sell: 0
 
                 };
             }
 
             if (trns_type === "buy") {
                 summary[instrument_id].total_buy += totalValue;
-                summary[instrument_id].total_qty_buy +=qty
+                summary[instrument_id].total_qty_buy += qty
             } else if (trns_type === "sell") {
                 summary[instrument_id].total_sell += totalValue;
-                summary[instrument_id].total_qty_sell +=qty
+                summary[instrument_id].total_qty_sell += qty
             }
         });
 
         setTradeDetails(Object.values(summary));
-     
+
     };
+
+    const processFinDetails = (data) => {
+        console.log(data.investments)
+        const totalInvestmentAmt = data.investments.reduce((acc, inv) => acc + parseFloat(inv.amount), 0);
+        setTotalInvestment(totalInvestmentAmt);
+
+        const totalBuyAmt = data.trades
+            .filter(trade => trade.trns_type === 'buy')
+            .reduce((sum, trade) => sum + trade.qty * parseFloat(trade.unit_price || 0) + parseFloat(trade.total_commission || 0), 0) || 0;
+
+        const totalSellAmt = data.trades
+            .filter(trade => trade.trns_type === 'sell')
+            .reduce((sum, trade) => sum + trade.qty * parseFloat(trade.unit_price || 0) - parseFloat(trade.total_commission || 0), 0) || 0;
+
+        setTotalBuyAmount(totalBuyAmt);
+        setTotalSellAmount(totalSellAmt);
+    }
 
     return (
         <div>
@@ -128,18 +152,36 @@ const ProjectDetails = () => {
 
                 {projectId && (
                     <>
+
+                        <div className='row mt-2'>
+                            {investorInvestments.length > 0 && (
+                                <div className="col-lg-12 grid-margin stretch-card">
+                                    <div className="card">
+
+                                        <h5 className="card-title">Trade Details</h5>
+                                        <TradeDetails data={tradeDetails} setGainLoss={setGainLoss} />
+
+                                    </div>
+                                </div>
+                            )}
+
+
+                        </div>
+
                         <div className='row mt-2'>
                             {investorInvestments.length > 0 && (
                                 <div className="col-lg-6 grid-margin stretch-card">
                                     <div className="card">
                                         <div className="card-body">
                                             <h5 className="card-title">Investor Investments</h5>
-                                            <InvestmentPieChart data={investorInvestments} />
-                                            <InvestorDetails data={investorInvestments}/>
+                                            <InvestorDetails data={investorInvestments} 
+                                            grandProfit={(parseFloat(gainLoss?.profit) || 0) - (parseFloat(gainLoss)?.loss || 0)}
+                                            />
+
                                         </div>
-                                        
+
                                     </div>
-                                    
+
                                 </div>
                             )}
 
@@ -147,30 +189,29 @@ const ProjectDetails = () => {
                                 <div className="col-lg-6 grid-margin stretch-card">
                                     <div className="card">
                                         <div className="card-body">
-                                            <h5 className="card-title">Trade Details</h5>
-                                            <TradeBarChart tradeDetails={tradeDetails} />
+                                            <h5 className="card-title">Financial Details</h5>
+                                            <div className="row">
+
+                                                <FinCardBody title={'Total Investment'} amount={totalInvestment} color='primary' />
+                                                <FinCardBody title={'Total Buy'} amount={totalBuyAmount} color='info' />
+                                                <FinCardBody title={'Total Sell'} amount={totalSellAmount} color='info' />
+                                                <FinCardBody title={'Available Balance'} 
+                                                amount={(totalInvestment-totalBuyAmount)+totalSellAmount} color='secondary'
+                                                />
+
+                                                <FinCardBody title={'Profit'} amount={gainLoss.profit} color='primary' />
+                                                <FinCardBody title={'Loss'} amount={gainLoss.loss} color='danger' />
+                                                <FinCardBody title={'Grand Profit'} amount={(parseFloat(gainLoss?.profit) || 0) - (parseFloat(gainLoss)?.loss || 0)} color='info' />
+
+
+
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             )}
                         </div>
-                        <div className='row mt-2'>
-                            {investorInvestments.length > 0 && (
-                                <div className="col-lg-12 grid-margin stretch-card">
-                                    <div className="card">
-                                        
-                                            <h5 className="card-title">Trade Details</h5>
-                                            <TradeDetails data={tradeDetails}/>
-                                        
-                                    </div>
-                                </div>
-                            )}
-
-
-                        </div>
                     </>
-
-
 
 
                 )}
