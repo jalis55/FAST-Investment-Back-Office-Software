@@ -106,6 +106,7 @@ const SellInstrument = () => {
             setQty('');
             setUnitPrice('');
             setTotalCommission('');
+            document.getElementById('instDropdown').value = '';
         } catch (error) {
             console.error("Error selling instrument:", error);
             Swal.fire({ icon: 'error', title: 'Sell Failed', text: error.response?.data?.message || 'Transaction failed.' });
@@ -135,7 +136,9 @@ const SellInstrument = () => {
                     <p className="card-description">Sell Instrument</p>
                     <div className="form-group">
                         <label>Select Instrument</label>
-                        <select className="form-control" onChange={handleInstrumentChange}>
+                        <select className="form-control"
+                        id="instDropdown"
+                        onChange={handleInstrumentChange}>
                             <option value="">Select Instrument</option>
                             {instruments.map((instrument) => (
                                 <option key={instrument.instrument_id} value={instrument.instrument_id}>
@@ -199,6 +202,7 @@ const SellInstrument = () => {
                     )}
                 </div>
             )}
+            
         </Wrapper>
     );
 };

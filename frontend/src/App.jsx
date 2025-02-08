@@ -15,6 +15,7 @@ import Trade from './layouts/Trade/Trade.jsx';
 import BuyInstrument from './layouts/Trade/BuyInstrument.jsx';
 import SellInstrument from './layouts/Trade/SellInstrument.jsx';
 import AddInvestment from './layouts/Investment/AddInvestment.jsx';
+import ProjectDetails from './layouts/Projects/ProjectDetails.jsx';
 
 
 
@@ -53,6 +54,10 @@ const router = createBrowserRouter([
       {
         path: "/new-project",
         element: <Projects />,
+      },
+      {
+        path: "/project-details",
+        element: <ProjectDetails/>,
       },
       {
         path:"/buy-instrument",

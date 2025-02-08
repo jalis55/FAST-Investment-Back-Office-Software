@@ -120,6 +120,7 @@ const BuyInstrument = () => {
             setQty('');
             setUnitPrice('');
             setTotalComm('');
+            document.getElementById('instDropdown').value = '';
         } catch (error) {
             console.error("Error purchasing instrument:", error);
             Swal.fire({ icon: 'error', title: 'Purchase Failed', text: error.response?.data?.message || 'Transaction failed.' });
@@ -154,6 +155,7 @@ const BuyInstrument = () => {
                             <label>Select Instrument</label>
                             <select
                                 className="form-control"
+                                id="instDropdown"
                                 value={selectedInstrument}
                                 onChange={(e) => setSelectedInstrument(e.target.value)}
                             >

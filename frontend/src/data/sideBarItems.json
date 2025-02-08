@@ -15,6 +15,12 @@
       "role":"admin"
     },
     {
+      "menuName":"Project Details",
+      "url":"/project-details",
+      "role":"admin"
+    },
+    
+    {
       "menuName":"Buy Instrument",
       "url":"/buy-instrument",
       "role":"admin"
