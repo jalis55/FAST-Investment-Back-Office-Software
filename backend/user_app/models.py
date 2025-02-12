@@ -34,6 +34,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField(max_length=20, blank=True, null=True)
     profile_image = models.ImageField(upload_to='profile_images/', blank=True, null=True)
     sex = models.CharField(max_length=1, choices=SEX_CHOICES, blank=True, null=True)
+    #nid,address
+    
     bio = models.TextField(blank=True, null=True)
     dob = models.DateField(blank=True, null=True)
     is_active = models.BooleanField(default=True)

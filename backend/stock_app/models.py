@@ -49,12 +49,14 @@ class FinancialAdvisor(models.Model):
 class Instrument(models.Model):
     id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
-    face_value = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self) -> str:
         return self.name
 
+
+
 class Trade(models.Model):
+
     BUY = 'buy'
     SELL = 'sell'
 
@@ -98,3 +100,17 @@ class Trade(models.Model):
 
     def __str__(self) -> str:
         return str(self.id)
+    
+class AccountReceivable(models.Model):
+    project=models.ForeignKey(Project,on_delete=models.CASCADE,related_name='project_rec')
+    investor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='investor_rec')
+    trade=models.ForeignKey(Trade,on_delete=models.CASCADE,related_name='trade_rec')
+    contribute_amount=models.DecimalField(max_digits=10,decimal_places=2)
+    percentage=models.DecimalField(max_digits=4,decimal_places=2)
+    gain_lose=models.DecimalField(max_digits=10,decimal_places=2)
+    is_advisor=models.BooleanField(default=False)
+    disburse_st=models.BooleanField(default=False)
+    disburse_dt = models.DateTimeField(null=True, blank=True)
+    accr_dt=models.DateField(auto_now=True)
+    authorized_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name='auth_by_rec')
+

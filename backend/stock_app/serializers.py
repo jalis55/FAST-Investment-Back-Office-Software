@@ -1,9 +1,10 @@
 from rest_framework import serializers
-from .models import Project, Investment, FinancialAdvisor, Trade, Instrument  
+from .models import Project, Investment, FinancialAdvisor, Trade, Instrument,AccountReceivable  
 from accounting.models import Account,Transaction
 from django.contrib.auth import get_user_model
 from django.db import transaction
 from decimal import Decimal
+from django.db.models import Sum
 
 User = get_user_model()
 
@@ -14,6 +15,8 @@ class FinancialAdvisorSerializer(serializers.ModelSerializer):
     class Meta:
         model = FinancialAdvisor
         fields = ['advisor', 'com_percentage', 'advisor_name', 'advisor_email']
+
+
 
 class InvestmentSerailizer(serializers.ModelField):
     class Meta:
@@ -79,6 +82,24 @@ class InvestmentSerializer(serializers.ModelSerializer):
 
         return investment
 
+class InvestmentContributionSerializer(serializers.ModelSerializer):
+    contribution_percentage = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Investment
+        fields = ['investor','amount', 'contribution_percentage']
+
+    def get_contribution_percentage(self, obj):
+        # Get the total investment for the project
+        total_investment = Investment.objects.filter(project=obj.project).aggregate(total_amount=Sum('amount'))['total_amount'] or 1
+
+        # Get the total investment by this investor in the project
+        investor_investment = Investment.objects.filter(project=obj.project, investor=obj.investor).aggregate(investor_total=Sum('amount'))['investor_total'] or 0
+
+        # Calculate the contribution percentage
+        return round((investor_investment / total_investment) * 100, 2)
+
+
 class TradeDetailsSerializer(serializers.ModelSerializer):
     instrument_id = serializers.IntegerField(source='instrument.id', read_only=True) 
     instrument_name = serializers.CharField(source='instrument.name', read_only=True)
@@ -95,7 +116,6 @@ class TradeSerializer(serializers.ModelSerializer):
 
 
 
-
 # Add the InstrumentSerializer
 class InstrumentSerializer(serializers.ModelSerializer):
     class Meta:
@@ -106,3 +126,10 @@ class BuyableInstrumentSerializer(serializers.Serializer):
     instrument_id = serializers.IntegerField()
     name = serializers.CharField()
     available_quantity = serializers.IntegerField()
+    average_buy_unit_price = serializers.DecimalField(max_digits=10, decimal_places=2, required=False)
+
+
+class AccountReceivableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=AccountReceivable
+        fields=['project','investor','trade','contribute_amount','percentage','gain_lose','is_advisor']
