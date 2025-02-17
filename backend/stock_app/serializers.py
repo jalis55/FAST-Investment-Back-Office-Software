@@ -8,17 +8,25 @@ from django.db.models import Sum
 
 User = get_user_model()
 
+class UserDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model=User
+        fields=('id',
+            'email',
+            'name')
+
+
 class FinancialAdvisorSerializer(serializers.ModelSerializer):
-    advisor_name = serializers.CharField(source='advisor.name', read_only=True)
-    advisor_email = serializers.CharField(source='advisor.email', read_only=True)
+    advisor=UserDetailsSerializer(read_only=True)
 
     class Meta:
         model = FinancialAdvisor
-        fields = ['advisor', 'com_percentage', 'advisor_name', 'advisor_email']
+        fields = ('project','advisor', 'com_percentage')
 
 
 
 class InvestmentSerailizer(serializers.ModelField):
+    investor=UserDetailsSerializer(read_only=True)
     class Meta:
         model=Investment
         fields=['project','investor','amount','authorized_by']
@@ -82,22 +90,10 @@ class InvestmentSerializer(serializers.ModelSerializer):
 
         return investment
 
-class InvestmentContributionSerializer(serializers.ModelSerializer):
-    contribution_percentage = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Investment
-        fields = ['investor','amount', 'contribution_percentage']
-
-    def get_contribution_percentage(self, obj):
-        # Get the total investment for the project
-        total_investment = Investment.objects.filter(project=obj.project).aggregate(total_amount=Sum('amount'))['total_amount'] or 1
-
-        # Get the total investment by this investor in the project
-        investor_investment = Investment.objects.filter(project=obj.project, investor=obj.investor).aggregate(investor_total=Sum('amount'))['investor_total'] or 0
-
-        # Calculate the contribution percentage
-        return round((investor_investment / total_investment) * 100, 2)
+class InvestmentContributionSerializer(serializers.Serializer):
+    investor = serializers.IntegerField()
+    contribute_amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    contribution_percentage = serializers.DecimalField(max_digits=5, decimal_places=2)
 
 
 class TradeDetailsSerializer(serializers.ModelSerializer):
@@ -133,3 +129,35 @@ class AccountReceivableSerializer(serializers.ModelSerializer):
     class Meta:
         model=AccountReceivable
         fields=['project','investor','trade','contribute_amount','percentage','gain_lose','is_advisor']
+
+
+
+
+
+class SimplifiedTradeDetailsSerializer(serializers.ModelSerializer):
+    instrument=InstrumentSerializer(read_only=True)
+    authorized_by=UserDetailsSerializer(read_only=True)
+    class Meta:
+        model = Trade
+        fields = ('instrument',
+                 'qty',
+                 'unit_price',
+                 'total_commission',
+                 'actual_unit_price',
+                 'trade_date',
+                 'authorized_by')
+        
+class AccountReceivableDetailsSerializer(serializers.ModelSerializer):
+    trade=SimplifiedTradeDetailsSerializer(read_only=True)
+    investor=UserDetailsSerializer()
+    class Meta:
+        model=AccountReceivable
+        fields=(
+            'project',
+            'investor',
+            'trade',
+            'contribute_amount',
+            'percentage',
+            'gain_lose',
+            'is_advisor'
+        )

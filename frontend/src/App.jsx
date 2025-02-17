@@ -16,6 +16,7 @@ import BuyInstrument from './layouts/Trade/BuyInstrument.jsx';
 import SellInstrument from './layouts/Trade/SellInstrument.jsx';
 import AddInvestment from './layouts/Investment/AddInvestment.jsx';
 import ProjectDetails from './layouts/Projects/ProjectDetails.jsx';
+import AccountReceivableDetails from './layouts/AccountReceivable/AccountReceivableDetails.jsx';
 
 
 
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
       {
         path:"/sell-instrument",
         element:<SellInstrument/>,
+      },
+      {
+        path:"/acc-rcevable-details",
+        element:<AccountReceivableDetails/>
       },
       {
         path:"/transactions",

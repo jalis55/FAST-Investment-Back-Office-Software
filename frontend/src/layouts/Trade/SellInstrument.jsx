@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import Swal from "sweetalert2";
+import React, { useState, useCallback } from 'react';
+import Swal from 'sweetalert2';
 import Wrapper from '../Wrapper/Wrapper';
 import api from '../../api';
 
@@ -13,6 +13,7 @@ const SellInstrument = () => {
     const [totalCommission, setTotalCommission] = useState('');
     const [loading, setLoading] = useState(false);
 
+    // Search for project and fetch instruments
     const searchProject = async (e) => {
         e.preventDefault();
         if (!searchId.trim()) {
@@ -21,13 +22,11 @@ const SellInstrument = () => {
         }
         try {
             const response = await api.get(`/api/stock/buyable-instruments/${searchId}/`);
-
             if (response.data.length === 0) {
                 Swal.fire({ icon: 'info', title: 'No Saleable Instrument', text: 'No available instruments for this project.' });
                 return;
             }
             setInstruments(response.data);
-
             setProjectId(searchId);
             setSearchId('');
             setSelectedInstrument(null);
@@ -37,24 +36,23 @@ const SellInstrument = () => {
         }
     };
 
-    const handleInstrumentChange = (e) => {
+    // Handle instrument selection
+    const handleInstrumentChange = useCallback((e) => {
         const instrumentId = parseInt(e.target.value, 10);
         const instrument = instruments.find(inst => inst.instrument_id === instrumentId);
         setSelectedInstrument(instrument || null);
         setQty('');
         setUnitPrice('');
         setTotalCommission('');
-    };
+    }, [instruments]);
 
+    // Handle form submission
     const handleSubmit = async (e) => {
         e.preventDefault();
-        // Input Validations
+
+        // Validation checks
         if (!selectedInstrument) {
             Swal.fire({ icon: 'warning', title: 'Selection Required', text: 'Please select an instrument.' });
-            return;
-        }
-        if (qty > selectedInstrument.available_quantity) {
-            Swal.fire({ icon: 'warning', title: 'Invalid Quantity', text: 'Quantity exceeds available stock!' });
             return;
         }
         if (!qty || isNaN(qty) || qty <= 0 || qty > selectedInstrument.available_quantity) {
@@ -70,7 +68,6 @@ const SellInstrument = () => {
             return;
         }
 
-
         setLoading(true);
 
         const tradeData = {
@@ -83,143 +80,143 @@ const SellInstrument = () => {
         };
 
         try {
+            // Step 1: Create the trade
             const response = await api.post('/api/stock/create-trade/', tradeData);
 
-            handleAccountReceivalbe(response.data);
+            // Step 2: Handle account receivable
+            await handleAccountReceivable(response.data);
 
+            // If both steps succeed, show success message and update UI
             Swal.fire({ icon: 'success', title: 'Success', text: 'Instrument sold successfully!' });
 
-            //updating instrument
-            setInstruments((prevInstruments) =>
+            // Update instruments list
+            setInstruments(prevInstruments =>
                 prevInstruments
-                    .map((inst) => {
-                        if (inst.instrument_id === selectedInstrument.instrument_id) {
-                            const newQty = inst.available_quantity - qty;
-                            return newQty > 0 ? { ...inst, available_quantity: newQty } : null;
-                        }
-                        return inst;
-                    })
-                    .filter((inst) => inst !== null)
+                    .map(inst => inst.instrument_id === selectedInstrument.instrument_id
+                        ? { ...inst, available_quantity: inst.available_quantity - qty }
+                        : inst
+                    )
+                    .filter(inst => inst.available_quantity > 0)
             );
 
-            // Reset Form
+            // Reset form fields
             setSelectedInstrument(null);
             setQty('');
             setUnitPrice('');
             setTotalCommission('');
             document.getElementById('instDropdown').value = '';
         } catch (error) {
-            console.error("Error selling instrument:", error);
-            Swal.fire({ icon: 'error', title: 'Sell Failed', text: error.response?.data?.message || 'Transaction failed.' });
+            console.error("Error in transaction:", error);
+            Swal.fire({ icon: 'error', title: 'Transaction Failed', text: error.response?.data?.message || 'Something went wrong.' });
         } finally {
             setLoading(false);
         }
     };
 
-    const handleAccountReceivalbe = async (data) => {
-        const trdId = data.id;
-        const proId = data.project;
-        const sellAmt = parseInt(data.qty) * parseFloat(data.unit_price) - parseFloat(data.total_commission);
-        const instrument = instruments.find(inst => inst.instrument_id === data.instrument);
+    // Handle account receivable logic
+    const handleAccountReceivable = async (data) => {
+        try {
+            const { id: trdId, project: proId, qty, unit_price, instrument: instrumentId } = data;
+            const sellAmt = qty * unit_price - data.total_commission;
+            const instrument = instruments.find(inst => inst.instrument_id === instrumentId);
 
-        if (!instrument) {
-            console.error("Instrument not found in list.");
-            return;
-        }
+         
 
-        const buyAmt = parseInt(data.qty) * parseFloat(instrument.average_buy_unit_price);
-        const investorContributions = await getInvestorContrib();
-        const disbursement = [];
-
-        if (buyAmt < sellAmt) {
-            const advisors = await getFinAdvisor();
-            const gain = sellAmt - buyAmt;
-
-
-            let totalAdvisorCommission = 0;
-
-            // Process Advisors
-            advisors.forEach(advisor => {
-                const commission = (gain * parseFloat(advisor.com_percentage)) / 100;
-                totalAdvisorCommission += commission;
-                disbursement.push({
-                    project: proId,
-                    trade: trdId,
-                    investor: advisor.advisor,
-                    contribute_amount: 0,
-                    percentage: advisor.com_percentage,
-                    gain_lose: commission.toFixed(2),
-                    is_advisor: 1
-                });
-            });
-
-            let remainingGain = gain - totalAdvisorCommission;
-
-            // Process Investors
-            investorContributions.forEach(investor => {
-                const investorShare = (remainingGain * investor.contribution_percentage) / 100;
-                disbursement.push({
-                    project: proId,
-                    investor: investor.investor,
-                    trade: trdId,
-                    contribute_amount: investor.amount,
-                    percentage: investor.contribution_percentage,
-                    gain_lose: investorShare.toFixed(2),
-                    is_advisor: 0
-                });
-            });
-
-            try {
-                // Call processGainLose once with the complete disbursement list
-                processGainLose(disbursement);
-                console.log("Gain/Loss Processed Successfully for all Advisors and Investors");
-
-            } catch (error) {
-                console.error("Error processing Gain/Loss:", error);
+            if (!instrument) {
+                throw new Error("Instrument not found in list.");
             }
-        } else {
-            const loss = sellAmt - buyAmt;
-            investorContributions.forEach(investor => {
-                const investorShare = (loss * investor.contribution_percentage) / 100;
-                disbursement.push({
-                    project: proId,
-                    investor: investor.investor,
-                    trade: trdId,
-                    contribute_amount: investor.amount,
-                    percentage: investor.contribution_percentage,
-                    gain_lose: investorShare.toFixed(2),
-                    is_advisor: 0
+
+            const buyAmt = qty * instrument.average_buy_unit_price;
+            const investorContributions = await getInvestorContrib();
+            const disbursement = [];
+
+            if (buyAmt < sellAmt) {
+                const advisors = await getFinAdvisor();
+                const gain = sellAmt - buyAmt;
+                let totalAdvisorCommission = 0;
+
+                advisors.forEach(advisor => {
+                    const commission = (gain * advisor.com_percentage) / 100;
+                    totalAdvisorCommission += commission;
+                    disbursement.push({
+                        project: proId,
+                        trade: trdId,
+                        investor: advisor.advisor.id,
+                        contribute_amount: 0,
+                        percentage: advisor.com_percentage,
+                        gain_lose: commission.toFixed(2),
+                        is_advisor: 1
+                    });
                 });
-            });
-            processGainLose(disbursement);
 
+                let remainingGain = gain - totalAdvisorCommission;
+                investorContributions.forEach(investor => {
+                    const investorShare = (remainingGain * investor.contribution_percentage) / 100;
+                    
+                    disbursement.push({
+                        project: proId,
+                        investor: investor.investor,
+                        trade: trdId,
+                        contribute_amount: investor.contribute_amount,
+                        percentage: investor.contribution_percentage,
+                        gain_lose: investorShare.toFixed(2),
+                        is_advisor: 0
+                    });
+                });
+            } else {
+                const loss = sellAmt - buyAmt;
+                investorContributions.forEach(investor => {
+                    const investorShare = (loss * investor.contribution_percentage) / 100;
+                    console.log(investor);
+                    disbursement.push({
+                        project: proId,
+                        investor: investor.investor,
+                        trade: trdId,
+                        contribute_amount: investor.contribute_amount,
+                        percentage: investor.contribution_percentage,
+                        gain_lose: investorShare.toFixed(2),
+                        is_advisor: 0
+                    });
+                });
+            }
 
-
+            // Process gain/loss
+            // console.log(disbursement);
+            await processGainLose(disbursement);
+            console.log("Gain/Loss Processed Successfully for all Advisors and Investors");
+        } catch (error) {
+            console.error("Error in handleAccountReceivable:", error);
+            throw error; // Propagate the error to handleSubmit
         }
     };
 
-    // Helper Functions to Get Advisors and Investor Contributions
+    // Fetch financial advisors
     const getFinAdvisor = async () => {
+        
         const response = await api.get(`/api/stock/fin-advisor-commission/${projectId}/`);
+
+        response.data.forEach(d=>console.log(d.advisor.id));
         return response.data;
     };
 
     const getInvestorContrib = async () => {
-        const response = await api.get(`/api/stock/investor-contrib-percent/${projectId}/`);
-        return response.data;
+        try {
+            const response = await api.get(`/api/stock/investor-contrib-percent/${projectId}/`);
+            // console.log("API Response:", response.data);
+            // response.data.forEach(d => console.log(d.investor.id));
+            return response.data;
+        } catch (error) {
+            console.error("Error fetching investor contributions:", error);
+        }
     };
 
-    // Process Gain/Loss API
+    // Process gain/loss
     const processGainLose = async (obj) => {
-        console.log(obj);
-        await api.post(`/api/stock/create-acc-recvable/`, obj);
-
+        await api.post('/api/stock/create-acc-recvable/', obj);
     };
-
 
     return (
         <Wrapper>
-            {/* Project Search Form */}
             <form className="ml-auto search-form d-md-block" onSubmit={searchProject}>
                 <div className="form-group">
                     <input
@@ -238,11 +235,9 @@ const SellInstrument = () => {
                     <p className="card-description">Sell Instrument</p>
                     <div className="form-group">
                         <label>Select Instrument</label>
-                        <select className="form-control"
-                            id="instDropdown"
-                            onChange={handleInstrumentChange}>
+                        <select className="form-control" id="instDropdown" onChange={handleInstrumentChange}>
                             <option value="">Select Instrument</option>
-                            {instruments.map((instrument) => (
+                            {instruments.map(instrument => (
                                 <option key={instrument.instrument_id} value={instrument.instrument_id}>
                                     {instrument.name}
                                 </option>
@@ -267,7 +262,7 @@ const SellInstrument = () => {
                                     value={qty}
                                     onChange={(e) => setQty(e.target.value)}
                                     min="1"
-                                    max={selectedInstrument?.available_quantity || ''}
+                                    max={selectedInstrument.available_quantity}
                                 />
                             </div>
 
@@ -304,7 +299,6 @@ const SellInstrument = () => {
                     )}
                 </div>
             )}
-
         </Wrapper>
     );
 };

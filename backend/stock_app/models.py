@@ -11,8 +11,7 @@ def generate_unique_id():
         if not Project.objects.filter(project_id=project_id).exists():
             return project_id
         
-# def generate_unique_trade_id():
-#     return uuid.uuid4().hex[:8].upper()
+
 
 class Project(models.Model):
     project_id = models.CharField(max_length=8, primary_key=True, default=generate_unique_id, unique=True)
@@ -30,19 +29,19 @@ class Project(models.Model):
     
 
 class Investment(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE,related_name='investments')
-    investor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='investor_name')
+    project = models.ForeignKey(Project, on_delete=models.CASCADE,related_name='investment_project_details')
+    investor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='invesment_investor_details')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='authorized_trades')
+    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='investor_authorizer_details')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self) -> str:
         return self.project.project_title
 class FinancialAdvisor(models.Model):
-    advisor=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='advisor')
+    advisor=models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,related_name='fin_investor_details')
     com_percentage=models.DecimalField(max_digits=10, decimal_places=2)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE,related_name="financial_advisors")
+    project = models.ForeignKey(Project, on_delete=models.CASCADE,related_name="fin_advisor_proj_details")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -66,15 +65,15 @@ class Trade(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='trades')
-    instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='trade_project_details')
+    instrument = models.ForeignKey(Instrument,related_name='trade_instrument_details' ,on_delete=models.CASCADE)
     trns_type = models.CharField(max_length=6, choices=TRANSACTION_TYPES)
     qty = models.IntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
     actual_unit_price = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     trade_date = models.DateField(auto_now_add=True)
     total_commission = models.DecimalField(max_digits=10, decimal_places=2)
-    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='investor')
+    authorized_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='trade_authorizer_details')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -102,9 +101,9 @@ class Trade(models.Model):
         return str(self.id)
     
 class AccountReceivable(models.Model):
-    project=models.ForeignKey(Project,on_delete=models.CASCADE,related_name='project_rec')
-    investor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='investor_rec')
-    trade=models.ForeignKey(Trade,on_delete=models.CASCADE,related_name='trade_rec')
+    project=models.ForeignKey(Project,on_delete=models.CASCADE,related_name='receivable_project_details')
+    investor=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.CASCADE,related_name='receivable_investor_details')
+    trade=models.ForeignKey(Trade,on_delete=models.CASCADE,related_name='receivable_trade_details')
     contribute_amount=models.DecimalField(max_digits=10,decimal_places=2)
     percentage=models.DecimalField(max_digits=4,decimal_places=2)
     gain_lose=models.DecimalField(max_digits=10,decimal_places=2)
@@ -112,5 +111,5 @@ class AccountReceivable(models.Model):
     disburse_st=models.BooleanField(default=False)
     disburse_dt = models.DateTimeField(null=True, blank=True)
     accr_dt=models.DateField(auto_now=True)
-    authorized_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name='auth_by_rec')
+    authorized_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name='receivable_authorizer_details')
 

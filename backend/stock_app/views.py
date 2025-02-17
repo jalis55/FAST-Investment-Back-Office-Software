@@ -6,7 +6,9 @@ from .projectserializers import ProjectSerializer,ProjectBalanceSerializer
 from .projectDetailsSerializers import ProjectDetailsSerializer
 from .serializers import (InstrumentSerializer,TradeSerializer,BuyableInstrumentSerializer,
                           InvestmentSerializer,InvestmentContributionSerializer,
-                          FinancialAdvisorSerializer,AccountReceivableSerializer)
+                          FinancialAdvisorSerializer,AccountReceivableSerializer,
+                          AccountReceivableDetailsSerializer
+                          )
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
@@ -14,6 +16,7 @@ from decimal import Decimal
 from django.shortcuts import get_object_or_404
 from django.db.models import Sum, F,Case, When, IntegerField
 from rest_framework.exceptions import NotFound
+from rest_framework.views import APIView
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -146,62 +149,49 @@ class InvestmentCreateAPIView(generics.CreateAPIView):
 
     
 class InvestorContributionRetrieveApiView(generics.RetrieveAPIView):
-    """
-    API view to retrieve the contribution percentage of all investors in a project.
-    """
-    queryset = Project.objects.all()  
-    serializer_class = InvestmentContributionSerializer  
     permission_classes=[AllowAny]
-
-    def get_object(self):
-        """
-        Retrieve the project object based on the project_id in the URL.
-        """
-        project_id = self.kwargs['project_id']
+    def get(self, request, project_id):
         try:
+            # Get the project
             project = Project.objects.get(project_id=project_id)
         except Project.DoesNotExist:
-            raise NotFound('Project not found.')
-        return project
+            return Response({"error": "Project not found"}, status=status.HTTP_404_NOT_FOUND)
 
-    def retrieve(self, request, *args, **kwargs):
-        # Get the project object
-        project = self.get_object()
-
-        # Retrieve all investments related to this project
+        # Get all investments for the project
         investments = Investment.objects.filter(project=project)
 
-        if not investments.exists():
-            return Response({"detail": "No investments found for this project."}, status=status.HTTP_404_NOT_FOUND)
+        # Calculate the total investment amount for the project
+        total_project_investment = investments.aggregate(total=Sum('amount'))['total'] or 0
 
-        # Serialize the investments with contribution percentages
-        serializer = self.get_serializer(investments, many=True)
+        # Group investments by investor and calculate their total contribution and percentage
+        investor_data = []
+        for investor in investments.values('investor').distinct():
+            investor_id = investor['investor']
+            investor_investments = investments.filter(investor_id=investor_id)
+            total_investor_contribution = investor_investments.aggregate(total=Sum('amount'))['total'] or 0
 
-        # Return the response with serialized data
-        return Response(serializer.data, status=status.HTTP_200_OK)
+            # Calculate percentage
+            percentage = (total_investor_contribution / total_project_investment) * 100 if total_project_investment > 0 else 0
 
+            investor_data.append({
+                'investor': investor_id,
+                'contribute_amount': total_investor_contribution,
+                'contribution_percentage': round(percentage, 2),  # Round to 2 decimal places
+            })
 
+        # Serialize the data
+        serializer = InvestmentContributionSerializer(investor_data, many=True)
+        return Response(serializer.data)
 class FinancialAdvisorListView(generics.ListAPIView):
     serializer_class = FinancialAdvisorSerializer
-    permission_classes=[AllowAny]
+    permission_classes = [AllowAny]
 
     def get_queryset(self):
-        project_id = self.kwargs['project_id']
-        try:
-            # Get the project by ID
-            project = Project.objects.get(pk=project_id)
-            # Filter financial advisors based on the project
-            return FinancialAdvisor.objects.filter(project=project)
-        except Project.DoesNotExist:
-            # If the project is not found, return an empty queryset
-            return FinancialAdvisor.objects.none()
+        project_id = self.kwargs.get('project_id')
+        # Filter FinancialAdvisor objects by project_id
+        return FinancialAdvisor.objects.filter(project=project_id)
 
-    def get(self, request, project_id):
-        advisors = self.get_queryset()
-        if advisors.exists():
-            serializer = self.get_serializer(advisors, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response({'error': 'No financial advisors found for this project'}, status=status.HTTP_404_NOT_FOUND)
+
     
 class AccountReceivableCreateApiView(generics.GenericAPIView):
     queryset = AccountReceivable.objects.all()
@@ -219,3 +209,15 @@ class AccountReceivableCreateApiView(generics.GenericAPIView):
         
         # If validation fails, return the errors
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AccountRecivableDetailsListApiView(generics.ListAPIView):
+
+    serializer_class=AccountReceivableDetailsSerializer
+    permission_classes=[AllowAny]
+
+    def get_queryset(self):
+        project_id = self.kwargs.get('project_id')
+        return AccountReceivable.objects.filter(project=project_id,disburse_st=0)
+
+

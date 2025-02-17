@@ -6,21 +6,21 @@ const Footer = () => {
             <>
                 <footer className="footer">
 
-                    <div class="template-demo">
-                        <button type="button" class="btn social-btn btn-rounded btn-facebook">
-                            <i class="mdi mdi-facebook"></i>
+                    <div className="template-demo">
+                        <button type="button" className="btn social-btn btn-rounded btn-facebook">
+                            <i className="mdi mdi-facebook"></i>
                         </button>
-                        <button type="button" class="btn social-btn btn-rounded btn-twitter">
-                            <i class="mdi mdi-twitter"></i>
+                        <button type="button" className="btn social-btn btn-rounded btn-twitter">
+                            <i className="mdi mdi-twitter"></i>
                         </button>
-                        <button type="button" class="btn social-btn btn-rounded btn-dribbble">
-                            <i class="mdi mdi-dribbble"></i>
+                        <button type="button" className="btn social-btn btn-rounded btn-dribbble">
+                            <i className="mdi mdi-dribbble"></i>
                         </button>
-                        <button type="button" class="btn social-btn btn-rounded btn-linkedin">
-                            <i class="mdi mdi-linkedin"></i>
+                        <button type="button" className="btn social-btn btn-rounded btn-linkedin">
+                            <i className="mdi mdi-linkedin"></i>
                         </button>
-                        <button type="button" class="btn social-btn btn-rounded btn-google">
-                            <i class="mdi mdi-google-plus"></i>
+                        <button type="button" className="btn social-btn btn-rounded btn-google">
+                            <i className="mdi mdi-google-plus"></i>
                         </button>
                         
                     </div>

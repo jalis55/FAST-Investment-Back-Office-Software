@@ -30,6 +30,11 @@
       "url":"/sell-instrument",
       "role":"admin"
     },
+    {
+      "menuName":"Account Receivable Details",
+      "url":"/acc-rcevable-details",
+      "role":"admin"
+    },
 
     {
       "menuName":"Transaction",
