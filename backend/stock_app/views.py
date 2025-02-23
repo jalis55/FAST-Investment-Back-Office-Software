@@ -14,9 +14,10 @@ from rest_framework.response import Response
 from rest_framework import status
 from decimal import Decimal
 from django.shortcuts import get_object_or_404
-from django.db.models import Sum, F,Case, When, IntegerField
+from django.db.models import Sum, F,Case, When, IntegerField,Q
 from rest_framework.exceptions import NotFound
 from rest_framework.views import APIView
+from django.utils import timezone
 
 
 class ProjectListCreateView(generics.ListCreateAPIView):
@@ -60,12 +61,12 @@ class ProjectBalanceView(generics.RetrieveAPIView):
         )['total'] or Decimal('0.00')
 
         # Calculate total sell
-        total_sell = Trade.objects.filter(project=project, trns_type=Trade.SELL).aggregate(
-            total=Sum(F('qty') * F('actual_unit_price'))
-        )['total'] or Decimal('0.00')
+        # total_sell = Trade.objects.filter(project=project, trns_type=Trade.SELL).aggregate(
+        #     total=Sum(F('qty') * F('actual_unit_price'))
+        # )['total'] or Decimal('0.00')
 
         # Compute available balance
-        available_balance = total_investment + total_sell - total_buy
+        available_balance = total_investment  - total_buy
 
         return {
             "project_id": project.project_id,
@@ -219,5 +220,77 @@ class AccountRecivableDetailsListApiView(generics.ListAPIView):
     def get_queryset(self):
         project_id = self.kwargs.get('project_id')
         return AccountReceivable.objects.filter(project=project_id,disburse_st=0)
+    
+class AccountReceivableDetailsAsonListApiView(generics.ListAPIView):
+    serializer_class = AccountReceivableDetailsSerializer
+    permission_classes=[AllowAny]
+
+    def get_queryset(self):
+
+        # Extract parameters from the request body
+        project_id = self.kwargs.get('project_id')
+        from_dt = self.request.data.get('from_dt')
+        to_dt = self.request.data.get('to_dt')
+        disburse_st = self.request.data.get('disburse_st')
+        # Validate required parameters
+        if not from_dt or not to_dt:
+            return AccountReceivable.objects.none()  # Return an empty queryset if dates are missing
+
+        # Convert date strings to date objects
+        try:
+            from_dt = timezone.datetime.strptime(from_dt, '%Y-%m-%d').date()
+            to_dt = timezone.datetime.strptime(to_dt, '%Y-%m-%d').date()
+        except ValueError:
+            return AccountReceivable.objects.none()  # Return an empty queryset if date format is invalid
+
+        queryset=AccountReceivable.objects.filter(project=project_id
+                        ,trade__trade_date__range=(from_dt,to_dt),
+                        disburse_st=disburse_st)
 
 
+        return queryset
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests to filter and return AccountReceivable records.
+        """
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+class UpdateAccountReceivableView(generics.UpdateAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def update(self, request, *args, **kwargs):
+        """Update disburse_st, disburse_dt, and authorized_by for a given date range & project."""
+        from_dt = request.data.get("from_dt")
+        to_dt = request.data.get("to_dt")
+        project_id = request.data.get("project")
+
+
+        if not from_dt or not to_dt or not project_id:
+            return Response({"error": "from_dt, to_dt, and project are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+
+
+            # updated_count = AccountReceivable.objects.filter(
+            #     Q(accr_dt__range=[from_dt, to_dt]) & Q(project=project_id)
+            # ).update(
+            #     disburse_st=True,
+            #     disburse_dt=timezone.now(),  # Ensure timezone-aware datetime
+            #     authorized_by=request.user
+            # )
+
+            update_count=AccountReceivable.objects.filter(project=project_id,
+                    accr_dt__date__range=(from_dt,to_dt)).update(
+                        disburse_st=1,
+                        disburse_dt=timezone.now(),
+                        authorized_by=request.user                                          
+                    )
+            
+
+            # return Response({"message": f"{updated_count} records updated successfully"}, status=status.HTTP_200_OK)
+            return Response({"message": f"{update_count} records updated successfully"}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

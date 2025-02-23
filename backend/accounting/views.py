@@ -18,6 +18,8 @@ from django.utils import timezone
 from decimal import Decimal
 
 
+
+
 class AllUserBalanceDetailsView(generics.ListAPIView):
     queryset=Account.objects.all()
     serializer_class=AccountSerializer
@@ -39,46 +41,34 @@ class CheckBalanceView(generics.RetrieveAPIView):
             # If not allowed, raise a permission denied error
             raise PermissionDenied("You do not have permission to view this balance.")
         
-class TransactionCreateView(generics.CreateAPIView):
+
+
+class TransactionCreateView(generics.ListCreateAPIView):  # Change to ListCreateAPIView
     queryset = Transaction.objects.all()
     serializer_class = TransactionSerializer
-    permission_classes = [IsAdminUser ]
+    
+    def create(self, request, *args, **kwargs):
+        """Handle bulk creation of transactions."""
+        is_bulk = isinstance(request.data, list)
+        serializer = self.get_serializer(data=request.data, many=is_bulk)
+        serializer.is_valid(raise_exception=True)
 
-    @db_transaction.atomic  # Ensure atomicity
-    def perform_create(self, serializer):
-        try:
-            # Save the transaction with issued_by, status, and issued_date
-            transaction = serializer.save(
-                issued_by=self.request.user,
-                status='pending',
-                issued_date=timezone.now()
-            )
-        
-            # Process deposit transactions
-            if transaction.transaction_type == 'deposit':
-                # Get or create the user's account
-                account, created = Account.objects.get_or_create(user=transaction.user)
+        with db_transaction.atomic():
+            transactions = serializer.save(issued_by=self.request.user, status="pending", issued_date=timezone.now())
 
-                # If the account was newly created, you might want to initialize the balance
-                if created:
-                    account.balance = Decimal('0.00')  # Ensure balance is Decimal
-                    account.save()
+            for transaction in transactions if is_bulk else [transactions]:
+                if transaction.transaction_type == "deposit":
+                    account, created = Account.objects.get_or_create(user=transaction.user)
+                    amount = Decimal(transaction.amount)
+                    account.update_balance(amount, "deposit")
+                    transaction.status = "completed"
+                    if transaction.narration is None:
+                        transaction.narration=f"Deposit of {amount} is completed"
 
-                # Convert the transaction amount to Decimal if it's not already
-                amount = Decimal(transaction.amount)  # Ensure amount is Decimal
-                
-                # Update the account balance for the deposit
-                account.update_balance(amount, 'deposit')
+                    transaction.save()
 
-                # Mark transaction as completed if successful
-                transaction.status = 'completed'
-                transaction.narration = f"Deposit amount {amount} has been successful"
-                transaction.save()
-        
-        except Exception as e:
-            # Handle any exceptions, including those related to account creation
-            raise ValidationError({"detail": f"Transaction failed: {str(e)}"})
-        
+        return Response(serializer.data)
+
 
 class PendingPaymentsView(generics.ListAPIView):
     queryset=Transaction.objects.filter(transaction_type='payment',status='pending')
@@ -106,6 +96,7 @@ class TransactionApproveView(generics.UpdateAPIView):
                     
                     # Only set the status to "approved" if balance update succeeds
                     transaction.status = 'approved'
+                    transaction.narration=f'Withdrawl of {transaction.amount}'
                     transaction.save()
                     
                 except ValidationError as e:

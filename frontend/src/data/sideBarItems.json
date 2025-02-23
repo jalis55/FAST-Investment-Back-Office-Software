@@ -35,6 +35,16 @@
       "url":"/acc-rcevable-details",
       "role":"admin"
     },
+    {
+      "menuName":"Account Receivable Details Ason",
+      "url":"/acc-rcevable-details-ason",
+      "role":"admin"
+    },
+    {
+      "menuName":"Disburse Profit",
+      "url":"/acc-disburse-profit",
+      "role":"admin"
+    },
 
     {
       "menuName":"Transaction",

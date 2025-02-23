@@ -5,26 +5,24 @@ from rest_framework.exceptions import ValidationError
 
 class Account(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    balance = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    balance = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.name}'s Account"
 
     def update_balance(self, amount, transaction_type):
-        # Ensure amount is converted to Decimal
-        if isinstance(amount, float):
-            amount = Decimal(amount)
+        # Ensure amount is a Decimal
+        amount = Decimal(amount)  # Convert to Decimal explicitly
         
         if transaction_type == 'deposit':
-            self.balance += amount
+            self.balance += amount  # Use Decimal addition
         elif transaction_type == 'payment':
             if self.balance < amount:
                 raise ValidationError({f"Insufficient balance for withdrawal of {self.user}."})
-            self.balance -= amount
-            
+            self.balance -= amount  # Use Decimal subtraction
+        
         self.save()
-
 
 class Transaction(models.Model):
     TRANSACTION_TYPE_CHOICES = [

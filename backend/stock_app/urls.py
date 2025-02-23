@@ -4,7 +4,9 @@ from .views import (ProjectListCreateView,ProjectDetailView
                     ,BuyableInstrumentView,InvestmentCreateAPIView
                     ,InvestorContributionRetrieveApiView,
                     FinancialAdvisorListView,AccountReceivableCreateApiView,
-                    AccountRecivableDetailsListApiView
+                    AccountRecivableDetailsListApiView,
+                    AccountReceivableDetailsAsonListApiView,
+                    UpdateAccountReceivableView
                     )
 
 urlpatterns = [
@@ -18,8 +20,9 @@ urlpatterns = [
     path('investor-contrib-percent/<str:project_id>/',InvestorContributionRetrieveApiView.as_view(),name='inv-cont-percent'),
     path('fin-advisor-commission/<str:project_id>/',FinancialAdvisorListView.as_view(),name='fin-advisor-commission'),
     path('create-acc-recvable/',AccountReceivableCreateApiView.as_view(),name='create-acc_rcvable'),
-    path('acc-recvable-details/<str:project_id>/',AccountRecivableDetailsListApiView.as_view(),name='create-acc_rcvable-details'),
-
+    path('acc-recvable-details/<str:project_id>/',AccountRecivableDetailsListApiView.as_view(),name='acc_rcvable-details'),
+    path('acc-recvable-details-ason/<str:project_id>/',AccountReceivableDetailsAsonListApiView.as_view(),name='acc_rcvable-details-ason'),
+    path('update-acc-recvable/',UpdateAccountReceivableView.as_view(),name='update-acc_rcvable'),
     
 
 ]

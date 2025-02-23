@@ -123,7 +123,7 @@ const Transactions = () => {
                         onChange={(e) => setTransactionType(e.target.value)}>
                         <option value="">Select a transaction type</option>
                         <option value="deposit">Deposit</option>
-                        <option value="withdraw">Withdraw</option>
+                        <option value="payment">Withdraw</option>
                     </select>
                 </div>
                 <div className="form-group">

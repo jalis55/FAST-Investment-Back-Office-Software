@@ -110,6 +110,6 @@ class AccountReceivable(models.Model):
     is_advisor=models.BooleanField(default=False)
     disburse_st=models.BooleanField(default=False)
     disburse_dt = models.DateTimeField(null=True, blank=True)
-    accr_dt=models.DateField(auto_now=True)
+    accr_dt=models.DateTimeField(auto_now_add=True)
     authorized_by=models.ForeignKey(settings.AUTH_USER_MODEL,on_delete=models.SET_NULL,null=True,related_name='receivable_authorizer_details')
 
